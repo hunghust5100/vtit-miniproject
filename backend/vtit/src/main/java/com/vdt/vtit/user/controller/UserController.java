@@ -6,6 +6,7 @@ import com.vdt.vtit.user.dto.UserResponse;
 import com.vdt.vtit.user.dto.UserUpdateRequest;
 import com.vdt.vtit.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping("/register")
+    @PostMapping
     public ResponseEntity<UserResponse> register(@RequestBody UserRegisterRequest request) {
         return new ResponseEntity<>(userService.createUser(request), HttpStatus.CREATED);
     }
@@ -30,8 +31,15 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAll() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<Page<UserResponse>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        Page<UserResponse> userPage = userService.getUsersWithPagination(page, size, sortBy, sortDir);
+
+        return ResponseEntity.ok(userPage);
     }
 
     @PutMapping("/{id}")
