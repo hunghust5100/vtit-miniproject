@@ -1,14 +1,14 @@
 server:
-  port: 8001
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
     name: vtit
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/vtit
-    username: postgres
-    password: 12345678
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -18,7 +18,3 @@ spring:
     properties:
       hibernate:
         format_sql: true
-
-
-
-

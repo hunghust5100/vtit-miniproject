@@ -1,0 +1,7 @@
+# Cấu hình Server
+SERVER_PORT=8001
+
+# Cấu hình Database
+DB_URL=jdbc:postgresql://localhost:5432/vtit
+DB_USERNAME=postgres
+DB_PASSWORD=password
