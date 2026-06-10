@@ -1,0 +1,54 @@
+package com.vdt.vtit.user.controller;
+
+import com.vdt.vtit.user.dto.ChangePasswordRequest;
+import com.vdt.vtit.user.dto.UserRegisterRequest;
+import com.vdt.vtit.user.dto.UserResponse;
+import com.vdt.vtit.user.dto.UserUpdateRequest;
+import com.vdt.vtit.user.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+
+    @PostMapping("/register")
+    public ResponseEntity<UserResponse> register(@RequestBody UserRegisterRequest request) {
+        return new ResponseEntity<>(userService.createUser(request), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserResponse>> getAll() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateProfile(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateUser(id, request));
+    }
+
+    @PutMapping("/{id}/change-password")
+    public ResponseEntity<String> changePassword(@PathVariable Long id, @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(id, request);
+        return ResponseEntity.ok("Đổi mật khẩu thành công!");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("Xóa người dùng thành công!");
+    }
+
+}

@@ -1,0 +1,24 @@
+server:
+  port: 8001
+
+spring:
+  application:
+    name: vtit
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vtit
+    username: postgres
+    password: 12345678
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
+
+
