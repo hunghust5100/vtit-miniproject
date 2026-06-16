@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // Create
     @Override
@@ -37,9 +38,9 @@ public class UserServiceImpl implements UserService{
 
         User user = User.builder()
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role("ROLE_USER")
+                .role("USER")
                 .phoneNumber(request.getPhoneNumber())
                 .enabled(true)
                 .build();
@@ -104,26 +105,29 @@ public class UserServiceImpl implements UserService{
     @Override
     public void changePassword(Long id, ChangePasswordRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
-        if (!request.getOldPassword().equals(user.getPassword())) {
-            throw new RuntimeException("Mật khẩu cũ không chính xác!");
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new BadRequestException("Mật khẩu cũ không chính xác!");
         }
 
-        user.setPassword(request.getNewPassword());
-        User save = userRepository.save(user);
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 
     @Override
     public void toggleUserStatus(Long id, boolean enabled) {
-
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        user.setEnabled(enabled);
+        userRepository.save(user);
     }
 
     // Delete
     @Override
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
         userRepository.deleteById(id);
     }
 
