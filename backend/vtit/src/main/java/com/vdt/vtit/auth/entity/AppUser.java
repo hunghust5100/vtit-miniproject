@@ -1,4 +1,4 @@
-package com.vdt.vtit.auth.service;
+package com.vdt.vtit.auth.entity;
 
 import com.vdt.vtit.user.entity.User;
 import lombok.Getter;

@@ -1,11 +1,13 @@
 package com.vdt.vtit.security.jwt;
 
-import com.vdt.vtit.auth.service.AppUser;
+import com.vdt.vtit.auth.entity.AppUser;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,7 @@ import java.util.Date;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtUtils {
     private final JwtProp jwtProp;
     private SecretKey key;
@@ -24,9 +27,11 @@ public class JwtUtils {
         this.key = Keys.hmacShaKeyFor(jwtProp.secret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email) {
+    public String generateToken(AppUser user) {
         return Jwts.builder()
-                .subject(email)
+                .subject(user.getUsername())
+                .claim("userId", user.getUser().getId())
+                .claim("role", user.getUser().getRole())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProp.expiration()))
                 .signWith(key)
@@ -42,16 +47,31 @@ public class JwtUtils {
     }
 
     public String getUsernameFromToken(String token) {
+
         return extractAllClaims(token).getSubject();
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+    public Long getUserIdFromToken(String token) {
+        return extractAllClaims(token).get("userId", Long.class);
     }
 
-    public boolean validateToken(String token, @NonNull AppUser appUser) {
-        final String username = getUsernameFromToken(token);
-        return (username.equals(appUser.getUsername()) && !isTokenExpired(token));
+    public String getRoleFromToken(String token) {
+        return extractAllClaims((token)).get("role", String.class);
+    }
+
+    private boolean isTokenExpired(Claims claims) {
+        return claims.getExpiration().before(new Date());
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return !isTokenExpired(claims);
+        } catch (JwtException | IllegalArgumentException e) {
+            // Log ra lý do cụ thể (Token hết hạn, sai chữ ký, format lỗi...) thay vì làm sập ứng dụng
+            log.error("JWT validation failed: {}", e.getMessage());
+        }
+        return false;
     }
 
 }

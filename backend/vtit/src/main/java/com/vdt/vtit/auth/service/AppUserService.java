@@ -1,9 +1,9 @@
 package com.vdt.vtit.auth.service;
 
+import com.vdt.vtit.auth.entity.AppUser;
 import com.vdt.vtit.user.entity.User;
 import com.vdt.vtit.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;

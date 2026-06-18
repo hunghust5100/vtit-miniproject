@@ -3,6 +3,7 @@ package com.vdt.vtit.auth.service;
 import com.vdt.vtit.auth.dto.AuthResponse;
 import com.vdt.vtit.auth.dto.LoginRequest;
 import com.vdt.vtit.auth.dto.RegisterRequest;
+import com.vdt.vtit.auth.entity.AppUser;
 import com.vdt.vtit.common.exception.BadRequestException;
 import com.vdt.vtit.security.jwt.JwtUtils;
 import com.vdt.vtit.user.entity.User;
@@ -40,7 +41,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String token = jwtUtils.generateToken(savedUser.getEmail());
+        String token = jwtUtils.generateToken(new AppUser(user));
 
         return AuthResponse.builder()
                 .token(token)
@@ -62,7 +63,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy người dùng!"));
 
-        String token = jwtUtils.generateToken(user.getEmail());
+        String token = jwtUtils.generateToken(new AppUser(user));
 
         return AuthResponse.builder()
                 .token(token)
