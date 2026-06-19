@@ -1,5 +1,6 @@
 package com.vdt.vtit.user.entity;
 
+import com.vdt.vtit.department.entity.Department;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,6 +38,14 @@ public class User {
     private LocalDateTime createdAt;
 
     private boolean enabled;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "department_id",
+            nullable = true,
+            foreignKey = @ForeignKey(name = "FK_DEPARTMENT")
+    )
+    private Department department;
 
     @PrePersist
     protected void onCreate() {
