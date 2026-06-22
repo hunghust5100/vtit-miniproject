@@ -42,7 +42,7 @@ public class AssetInstance {
 
     private Long purchasePrice;
 
-    private String depreciationMethod; // Phuong phap khau hao
+    private String depreciationMethod;
 
     private Long netBookValue;
 

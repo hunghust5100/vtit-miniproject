@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService{
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role("USER")
+                .role(request.getRole() != null && !request.getRole().trim().isEmpty() ? request.getRole().trim().toUpperCase() : "USER")
                 .phoneNumber(request.getPhoneNumber())
                 .enabled(true)
                 .build();
@@ -96,6 +96,9 @@ public class UserServiceImpl implements UserService{
         user.setFullName(request.getFullName());
         user.setBirthday(request.getBirthday());
         user.setPhoneNumber(request.getPhoneNumber());
+        if (request.getRole() != null && !request.getRole().trim().isEmpty()) {
+            user.setRole(request.getRole().trim().toUpperCase());
+        }
 
         User updateUser = userRepository.save(user);
 

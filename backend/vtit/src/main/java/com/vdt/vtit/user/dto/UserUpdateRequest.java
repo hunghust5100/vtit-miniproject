@@ -9,5 +9,5 @@ public class UserUpdateRequest {
     private String fullName;
     private String phoneNumber;
     private LocalDate birthday;
+    private String role;
 }
-
