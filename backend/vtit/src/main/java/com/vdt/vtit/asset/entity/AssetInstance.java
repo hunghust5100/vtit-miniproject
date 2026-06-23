@@ -1,11 +1,14 @@
 package com.vdt.vtit.asset.entity;
 
+import com.vdt.vtit.allocation.entity.Allocation;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -47,6 +50,14 @@ public class AssetInstance {
     private Long netBookValue;
 
     private Long salvageValue;
+
+    @OneToMany(
+            mappedBy = "assetInstance",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private List<Allocation> Allocations = new ArrayList<>();
 
     @Version
     private Long version;

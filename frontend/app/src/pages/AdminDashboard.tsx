@@ -52,7 +52,7 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="dashboard-header" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 className="dashboard-title">Hệ thống Quản trị (Admin)</h1>
           <p className="dashboard-subtitle">Xin chào, {user?.fullName || 'Admin'}. Dưới đây là tổng quan hệ thống thiết bị.</p>

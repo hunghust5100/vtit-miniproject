@@ -13,7 +13,9 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  Pencil
+  Pencil,
+  History,
+  Clock
 } from 'lucide-react';
 import './ManagementTable.css';
 import { useToast } from '../../context/ToastContext';
@@ -27,6 +29,20 @@ interface UserResponse {
   role: string;
   createdAt: string;
   birthday?: string;
+}
+
+interface AllocationItem {
+  id: number;
+  assetModelId: number;
+  assetModelName: string;
+  staffId: number;
+  staffName: string;
+  assetInstanceId: number;
+  requestAt: string;
+  actionAt: string | null;
+  status: string;
+  receivedAt: string | null;
+  returnedAt: string | null;
 }
 
 const UserManagement: React.FC = () => {
@@ -60,6 +76,12 @@ const UserManagement: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Allocation History Modal State
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
+  const [historyList, setHistoryList] = useState<AllocationItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Confirm Modal State
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -159,6 +181,23 @@ const UserManagement: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Open Allocation History Modal
+  const handleOpenHistoryModal = async (u: UserResponse) => {
+    setSelectedUser(u);
+    setIsHistoryOpen(true);
+    setLoadingHistory(true);
+    try {
+      const response = await api.get(`/api/v1/allocation/staff/${u.id}?size=100&sortBy=id&sortDir=desc`);
+      setHistoryList(response.data?.content || []);
+    } catch (err) {
+      console.error('Failed to fetch user allocation history', err);
+      toast.showError('Không thể lấy lịch sử cấp phát của nhân viên.');
+      setHistoryList([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   // Create or Update User
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,6 +273,26 @@ const UserManagement: React.FC = () => {
     );
   };
 
+  const getStatusBadge = (statusStr: string) => {
+    const status = statusStr ? statusStr.toUpperCase() : 'PENDING';
+    switch (status) {
+      case 'PENDING':
+        return <span className="status-badge pending">Chờ phê duyệt</span>;
+      case 'APPROVED':
+        return <span className="status-badge" style={{ backgroundColor: '#e0f2fe', color: '#0369a1' }}>Đã duyệt - Chờ giao</span>;
+      case 'USING':
+        return <span className="status-badge active">Đang sử dụng</span>;
+      case 'RETURNED':
+        return <span className="status-badge" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>Đã thu hồi</span>;
+      case 'REJECTED':
+        return <span className="status-badge inactive">Từ chối</span>;
+      case 'CANCELED':
+        return <span className="status-badge inactive" style={{ backgroundColor: '#e2e8f0', color: '#64748b' }}>Đã hủy</span>;
+      default:
+        return <span className="status-badge inactive">{status}</span>;
+    }
+  };
+
   // Render Sort Header indicator
   const renderSortIndicator = (column: string) => {
     if (sortBy !== column) return <ArrowUpDown size={14} className="sort-icon-indicator" />;
@@ -250,7 +309,7 @@ const UserManagement: React.FC = () => {
       <div className="page-header">
         <div className="page-header-info">
           <h1 className="page-title">Danh sách nhân viên</h1>
-          <p className="page-subtitle">Xem, thêm mới, sửa đổi thông tin nhân viên và phân quyền hệ thống.</p>
+          <p className="page-subtitle">Xem, thêm mới, sửa đổi thông tin nhân viên, phân quyền và tra cứu lịch sử cấp phát của từng cá nhân.</p>
         </div>
         <div className="page-header-actions">
           <button 
@@ -359,6 +418,15 @@ const UserManagement: React.FC = () => {
                             <button
                               type="button"
                               className="btn-outline-sm"
+                              style={{ color: 'var(--primary-color)', borderColor: 'rgba(227, 6, 19, 0.2)', padding: '5px 8px' }}
+                              onClick={() => handleOpenHistoryModal(u)}
+                              title="Xem lịch sử cấp phát"
+                            >
+                              <History size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline-sm"
                               style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)', padding: '5px 8px' }}
                               onClick={() => handleOpenEditModal(u)}
                               title="Sửa thông tin"
@@ -462,6 +530,76 @@ const UserManagement: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Allocation History Modal */}
+      {isHistoryOpen && selectedUser && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '800px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <History size={20} style={{ color: 'var(--primary-color)' }} />
+                Lịch sử cấp phát: {selectedUser.fullName}
+              </h2>
+              <button type="button" className="btn-outline-sm" onClick={() => setIsHistoryOpen(false)}>Đóng</button>
+            </div>
+
+            {loadingHistory ? (
+              <div style={{ padding: '32px', textAlign: 'center' }}>
+                <div className="spinner" style={{ margin: '0 auto 12px auto', width: '25px', height: '25px', border: '3px solid var(--border-color)', borderTopColor: 'var(--primary-color)' }}></div>
+                <span>Đang tải lịch sử cấp phát...</span>
+              </div>
+            ) : historyList.length === 0 ? (
+              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                Nhân viên này chưa có lịch sử yêu cầu hoặc cấp phát thiết bị nào.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto', maxHeight: '400px' }}>
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Mã số</th>
+                      <th>Dòng máy (Model)</th>
+                      <th>Ngày yêu cầu</th>
+                      <th>Trạng thái</th>
+                      <th>Ngày nhận bàn giao</th>
+                      <th>Ngày thu hồi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyList.map((item) => (
+                      <tr key={item.id}>
+                        <td style={{ fontFamily: 'monospace' }}>#{item.id}</td>
+                        <td style={{ fontWeight: 600 }}>{item.assetModelName}</td>
+                        <td style={{ fontSize: '13px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={13} style={{ color: 'var(--text-secondary)' }} />
+                            {new Date(item.requestAt).toLocaleDateString('vi-VN')}
+                          </span>
+                        </td>
+                        <td>{getStatusBadge(item.status)}</td>
+                        <td style={{ fontSize: '13px' }}>
+                          {item.receivedAt ? (
+                            <span style={{ color: 'var(--success)' }}>{new Date(item.receivedAt).toLocaleDateString('vi-VN')}</span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>-</span>
+                          )}
+                        </td>
+                        <td style={{ fontSize: '13px' }}>
+                          {item.returnedAt ? (
+                            <span style={{ color: 'var(--text-secondary)' }}>{new Date(item.returnedAt).toLocaleDateString('vi-VN')}</span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit User Modal */}
       {isModalOpen && (

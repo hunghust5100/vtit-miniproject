@@ -11,6 +11,9 @@ import DepartmentManagement from '../pages/admin/DepartmentManagement';
 import AssetTypeManagement from '../pages/admin/AssetTypeManagement';
 import AssetModelManagement from '../pages/admin/AssetModelManagement';
 import AssetInstanceManagement from '../pages/admin/AssetInstanceManagement';
+import UserRequests from '../pages/UserRequests';
+import AllocationManagement from '../pages/admin/AllocationManagement';
+import UserProfile from '../pages/UserProfile';
 
 // Helper to check if a user is authenticated
 const useRequireAuth = () => {
@@ -159,6 +162,14 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="admin/allocations"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AllocationManagement />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Manager Routes */}
           <Route
@@ -169,6 +180,22 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="manager/allocations"
+            element={
+              <ProtectedRoute allowedRoles={['MANAGER']}>
+                <AllocationManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="manager/asset-instances"
+            element={
+              <ProtectedRoute allowedRoles={['MANAGER']}>
+                <AssetInstanceManagement />
+              </ProtectedRoute>
+            }
+          />
 
           {/* User Routes */}
           <Route
@@ -176,6 +203,30 @@ const AppRoutes: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['USER']}>
                 <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="user/my-assets"
+            element={
+              <ProtectedRoute allowedRoles={['USER']}>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="user/requests"
+            element={
+              <ProtectedRoute allowedRoles={['USER']}>
+                <UserRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER', 'USER']}>
+                <UserProfile />
               </ProtectedRoute>
             }
           />

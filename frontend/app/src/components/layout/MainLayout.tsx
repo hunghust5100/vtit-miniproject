@@ -11,7 +11,8 @@ import {
   Cpu, 
   HardDrive,
   FileCheck,
-  ClipboardList
+  ClipboardList,
+  User
 } from 'lucide-react';
 import viettelLogo from '../../assets/viettel_logo.png';
 import './MainLayout.css';
@@ -81,7 +82,8 @@ const MainLayout: React.FC = () => {
         { path: '/admin/departments', label: 'Quản lý Phòng ban', icon: <FolderTree size={20} /> },
         { path: '/admin/asset-types', label: 'Quản lý Loại thiết bị', icon: <Layers size={20} /> },
         { path: '/admin/asset-models', label: 'Quản lý Model thiết bị', icon: <Cpu size={20} /> },
-        { path: '/admin/asset-instances', label: 'Quản lý Thiết bị', icon: <HardDrive size={20} /> }
+        { path: '/admin/asset-instances', label: 'Quản lý Thiết bị', icon: <HardDrive size={20} /> },
+        { path: '/admin/allocations', label: 'Quản lý Cấp phát', icon: <FileCheck size={20} /> }
       );
     } else if (role === 'MANAGER') {
       items.push(
@@ -97,6 +99,8 @@ const MainLayout: React.FC = () => {
         { path: '/user/requests', label: 'Yêu cầu cấp phát', icon: <ClipboardList size={20} /> }
       );
     }
+    
+    items.push({ path: '/profile', label: 'Thông tin cá nhân', icon: <User size={20} /> });
     
     return items;
   };

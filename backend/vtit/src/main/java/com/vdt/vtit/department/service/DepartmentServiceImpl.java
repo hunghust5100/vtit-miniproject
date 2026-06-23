@@ -84,6 +84,16 @@ public class DepartmentServiceImpl implements DepartmentService{
 
         User user = userRepository.findById(request.getHeadManagerId())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy người dùng"));
+        user.setRole("MANAGER");
+        userRepository.save(user);
+
+        if (department.getHeadManagerId() != null) {
+            User oldManager = userRepository.findById(department.getHeadManagerId())
+                    .orElseThrow(() -> new BadRequestException("Không tìm thấy trưởng phòng cũ"));
+
+            oldManager.setRole("USER");
+            userRepository.save(oldManager);
+        }
 
 
         department.setCategory(request.getCategory());

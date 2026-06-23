@@ -1,8 +1,10 @@
 package com.vdt.vtit.asset.controller;
 
+import com.vdt.vtit.asset.dto.AssetInstanceResponse;
 import com.vdt.vtit.asset.dto.AssetModelCreateRequest;
 import com.vdt.vtit.asset.dto.AssetModelResponse;
 import com.vdt.vtit.asset.dto.AssetModelUpdateRequest;
+import com.vdt.vtit.asset.entity.AssetInstance;
 import com.vdt.vtit.asset.service.AssetModelService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,18 @@ public class AssetModelController {
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         return ResponseEntity.ok(assetModelService.getAllAssetModelPagination(page, size, sortBy, sortDir));
+    }
+
+    @GetMapping("/instance")
+    public ResponseEntity<Page<AssetInstanceResponse>> getAssetInstanceOfModel(
+            @RequestParam(defaultValue = "null") String status,
+            @RequestParam(defaultValue = "null") Long assetModelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        return ResponseEntity.ok(assetModelService.getAssetInstanceOfModel(status, assetModelId, page, size, sortBy, sortDir));
     }
 
     @PutMapping("/{id}")
