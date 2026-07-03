@@ -1,0 +1,51 @@
+services:
+  # ---------------------------------------------------------
+  # 1. Dịch vụ Cơ sở dữ liệu: PostgreSQL 17 + pgvector Official
+  # ---------------------------------------------------------
+  db:
+    image: pgvector/pgvector:pg17-bookworm
+    container_name: pgvector_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Map file init.sql vào thư mục khởi tạo đặc biệt của Postgres
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------
+  # 2. Dịch vụ Ứng dụng: Java Spring Boot vtit
+  # ---------------------------------------------------------
+  app:
+    build:
+      context: ./backend/vtit          # Trỏ chính xác vào thư mục con chứa code
+      dockerfile: Dockerfile
+    container_name: spring_boot_vtit
+    restart: always
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}" # Đồng bộ port động theo file .env
+    environment:
+      - SERVER_PORT=${SERVER_PORT}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
+
+      # Ghi đè URL kết nối sang hostname 'db' của mạng nội bộ Docker
+      - DB_URL=jdbc:postgresql://db:5432/${DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy # Chỉ chạy khi database đã sẵn sàng hoàn toàn
+
+volumes:
+  pgdata: # Nơi lưu trữ dữ liệu bền vững, không bị mất khi tắt container

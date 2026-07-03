@@ -5,6 +5,10 @@ spring:
   application:
     name: vtit
 
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}

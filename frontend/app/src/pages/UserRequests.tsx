@@ -67,6 +67,7 @@ const UserRequests: React.FC = () => {
   const [selectedModelDetail, setSelectedModelDetail] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [detailStatus, setDetailStatus] = useState<string>('');
 
   const fetchUserDataAndModels = async () => {
     if (!user?.email) return;
@@ -161,26 +162,32 @@ const UserRequests: React.FC = () => {
     }
   };
 
-  const handleOpenDetailModal = async (assetId: number) => {
+  const handleOpenDetailModal = async (assetId: number | null, status: string, modelId: number) => {
     setIsDetailOpen(true);
     setLoadingDetail(true);
     setDetailError(null);
     setSelectedAssetDetail(null);
     setSelectedModelDetail(null);
+    setDetailStatus(status);
     try {
-      const assetRes = await api.get(`/api/v1/assets/instance/${assetId}`);
-      setSelectedAssetDetail(assetRes.data);
-      if (assetRes.data?.assetModelId) {
-        try {
-          const modelRes = await api.get(`/api/v1/assets/model/${assetRes.data.assetModelId}`);
-          setSelectedModelDetail(modelRes.data);
-        } catch (modelErr) {
-          console.error("Failed to fetch model details", modelErr);
+      if (status.toUpperCase() === 'PENDING') {
+        const modelRes = await api.get(`/api/v1/assets/model/${modelId}`);
+        setSelectedModelDetail(modelRes.data);
+      } else if (assetId) {
+        const assetRes = await api.get(`/api/v1/assets/instance/${assetId}`);
+        setSelectedAssetDetail(assetRes.data);
+        if (assetRes.data?.assetModelId) {
+          try {
+            const modelRes = await api.get(`/api/v1/assets/model/${assetRes.data.assetModelId}`);
+            setSelectedModelDetail(modelRes.data);
+          } catch (modelErr) {
+            console.error("Failed to fetch model details", modelErr);
+          }
         }
       }
     } catch (err: any) {
-      console.error("Failed to fetch asset details", err);
-      setDetailError("Không thể tải thông tin chi tiết thiết bị.");
+      console.error("Failed to fetch details", err);
+      setDetailError("Không thể tải thông tin chi tiết.");
     } finally {
       setLoadingDetail(false);
     }
@@ -364,12 +371,22 @@ const UserRequests: React.FC = () => {
                         )}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        {a.assetInstanceId ? (
+                        {a.status === 'PENDING' ? (
                           <button
                             type="button"
                             className="btn-outline-sm"
                             style={{ color: 'var(--primary-color)', borderColor: 'rgba(227, 6, 19, 0.2)', padding: '5px 12px', borderRadius: '50px', display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '12px' }}
-                            onClick={() => handleOpenDetailModal(a.assetInstanceId)}
+                            onClick={() => handleOpenDetailModal(null, a.status, a.assetModelId)}
+                            title="Xem thông tin dòng thiết bị yêu cầu"
+                          >
+                            <Eye size={12} /> Dòng máy
+                          </button>
+                        ) : a.assetInstanceId ? (
+                          <button
+                            type="button"
+                            className="btn-outline-sm"
+                            style={{ color: 'var(--primary-color)', borderColor: 'rgba(227, 6, 19, 0.2)', padding: '5px 12px', borderRadius: '50px', display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '12px' }}
+                            onClick={() => handleOpenDetailModal(a.assetInstanceId, a.status, a.assetModelId)}
                             title="Xem chi tiết thiết bị được bàn giao"
                           >
                             <Eye size={12} /> Thiết bị
@@ -430,7 +447,7 @@ const UserRequests: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <HardDrive size={20} style={{ color: 'var(--primary-color)' }} />
-                Thông tin chi tiết thiết bị {selectedAssetDetail ? `#${selectedAssetDetail.id}` : ''}
+                Thông tin chi tiết {detailStatus.toUpperCase() === 'PENDING' ? 'dòng thiết bị' : `thiết bị ${selectedAssetDetail ? `#${selectedAssetDetail.id}` : ''}`}
               </h2>
               <button 
                 type="button" 
@@ -451,7 +468,7 @@ const UserRequests: React.FC = () => {
               <div style={{ color: 'var(--error)', backgroundColor: '#fef2f2', padding: '12px 16px', borderRadius: '8px', border: '1px solid #fee2e2', fontSize: '13px' }}>
                 {detailError}
               </div>
-            ) : selectedAssetDetail ? (
+            ) : (selectedAssetDetail || selectedModelDetail) ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 
                 {/* 2-Column Grid */}
@@ -466,7 +483,7 @@ const UserRequests: React.FC = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-secondary)' }}>Dòng máy:</span>
-                          <strong style={{ textAlign: 'right' }}>{selectedAssetDetail.assetModelName}</strong>
+                          <strong style={{ textAlign: 'right' }}>{selectedModelDetail?.name || selectedAssetDetail?.assetModelName}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-secondary)' }}>Mã dòng máy:</span>
@@ -478,36 +495,42 @@ const UserRequests: React.FC = () => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-secondary)' }}>Loại thiết bị:</span>
-                          <span>{selectedAssetDetail.assetTypeName}</span>
+                          <span>{selectedModelDetail?.assetTypeName || selectedAssetDetail?.assetTypeName || '-'}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)' }}>Số Serial:</span>
-                          <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary-color)' }}>{selectedAssetDetail.serial}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: 'var(--text-secondary)' }}>Trạng thái:</span>
-                          <span className={`status-badge ${selectedAssetDetail.status === 'USING' ? 'active' : ''}`} style={{ margin: 0 }}>
-                            {selectedAssetDetail.status === 'USING' ? 'Đang sử dụng' : selectedAssetDetail.status}
-                          </span>
-                        </div>
+                        {detailStatus.toUpperCase() !== 'PENDING' && selectedAssetDetail && (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Số Serial:</span>
+                              <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary-color)' }}>{selectedAssetDetail.serial}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Trạng thái:</span>
+                              <span className={`status-badge ${selectedAssetDetail.status === 'USING' ? 'active' : ''}`} style={{ margin: 0 }}>
+                                {selectedAssetDetail.status === 'USING' ? 'Đang sử dụng' : selectedAssetDetail.status}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    <div>
-                      <h3 style={{ fontSize: '15px', fontWeight: 700, borderBottom: '2px solid var(--border-color)', paddingBottom: '8px', marginBottom: '12px', color: 'var(--primary-color)', marginTop: 0 }}>
-                        Thông tin mua sắm
-                      </h3>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)' }}>Ngày mua:</span>
-                          <span>{selectedAssetDetail.purchaseDate ? new Date(selectedAssetDetail.purchaseDate).toLocaleDateString('vi-VN') : '-'}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)' }}>Giá trị ban đầu:</span>
-                          <strong>{selectedAssetDetail.purchasePrice ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedAssetDetail.purchasePrice) : '-'}</strong>
+                    {detailStatus.toUpperCase() !== 'PENDING' && selectedAssetDetail && (
+                      <div>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, borderBottom: '2px solid var(--border-color)', paddingBottom: '8px', marginBottom: '12px', color: 'var(--primary-color)', marginTop: 0 }}>
+                          Thông tin mua sắm
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Ngày mua:</span>
+                            <span>{selectedAssetDetail.purchaseDate ? new Date(selectedAssetDetail.purchaseDate).toLocaleDateString('vi-VN') : '-'}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Giá trị ban đầu:</span>
+                            <strong>{selectedAssetDetail.purchasePrice ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedAssetDetail.purchasePrice) : '-'}</strong>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Column 2: Specs */}
@@ -532,20 +555,26 @@ const UserRequests: React.FC = () => {
                         )}
 
                         {/* Specifications from Instance */}
-                        {selectedAssetDetail.specification && Object.keys(selectedAssetDetail.specification).length > 0 ? (
-                          <div style={{ marginTop: selectedModelDetail?.specification ? '10px' : 0 }}>
-                            <div style={{ fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '12px' }}>Thông số riêng thiết bị:</div>
-                            {Object.entries(selectedAssetDetail.specification).map(([key, val]) => (
-                              <div key={`instance-${key}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed var(--border-color)' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>{key}:</span>
-                                <span style={{ fontWeight: 600 }}>{String(val)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          (!selectedModelDetail?.specification || Object.keys(selectedModelDetail.specification).length === 0) && (
-                            <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>Không có thông số kỹ thuật.</div>
+                        {detailStatus.toUpperCase() !== 'PENDING' && selectedAssetDetail && (
+                          selectedAssetDetail.specification && Object.keys(selectedAssetDetail.specification).length > 0 ? (
+                            <div style={{ marginTop: selectedModelDetail?.specification ? '10px' : 0 }}>
+                              <div style={{ fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '12px' }}>Thông số riêng thiết bị:</div>
+                              {Object.entries(selectedAssetDetail.specification).map(([key, val]) => (
+                                <div key={`instance-${key}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed var(--border-color)' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>{key}:</span>
+                                  <span style={{ fontWeight: 600 }}>{String(val)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            (!selectedModelDetail?.specification || Object.keys(selectedModelDetail.specification).length === 0) && (
+                              <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>Không có thông số kỹ thuật.</div>
+                            )
                           )
+                        )}
+
+                        {detailStatus.toUpperCase() === 'PENDING' && (!selectedModelDetail?.specification || Object.keys(selectedModelDetail.specification).length === 0) && (
+                          <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>Không có thông số kỹ thuật.</div>
                         )}
                       </div>
                     </div>
