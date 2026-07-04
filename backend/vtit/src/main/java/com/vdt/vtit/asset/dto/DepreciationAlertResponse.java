@@ -18,5 +18,5 @@ public class DepreciationAlertResponse {
     private Integer cycleMonths;
     private Integer monthsElapsed;
     private String alertType; // "FULLY_DEPRECIATED" or "UPGRADE_REQUIRED"
-    private String message;
+    private String message; 
 }
