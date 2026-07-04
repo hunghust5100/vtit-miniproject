@@ -42,6 +42,14 @@ public class AssetModel {
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> specification;
 
+    private String depreciationMethod;
+
+    private Double depreciationRate;
+
+    private Integer depreciationCycle;
+
+    private Double adjustmentFactor;
+
     @OneToMany(
             mappedBy = "assetModel",
             cascade = CascadeType.ALL,

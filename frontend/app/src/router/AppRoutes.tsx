@@ -14,6 +14,7 @@ import AssetInstanceManagement from '../pages/admin/AssetInstanceManagement';
 import UserRequests from '../pages/UserRequests';
 import AllocationManagement from '../pages/admin/AllocationManagement';
 import UserProfile from '../pages/UserProfile';
+import UserAllocationHistory from '../pages/UserAllocationHistory';
 
 // Helper to check if a user is authenticated
 const useRequireAuth = () => {
@@ -180,28 +181,12 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="manager/allocations"
-            element={
-              <ProtectedRoute allowedRoles={['MANAGER']}>
-                <AllocationManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="manager/asset-instances"
-            element={
-              <ProtectedRoute allowedRoles={['MANAGER']}>
-                <AssetInstanceManagement />
-              </ProtectedRoute>
-            }
-          />
 
           {/* User Routes */}
           <Route
             path="user"
             element={
-              <ProtectedRoute allowedRoles={['USER']}>
+              <ProtectedRoute allowedRoles={['USER', 'MANAGER']}>
                 <UserDashboard />
               </ProtectedRoute>
             }
@@ -209,7 +194,7 @@ const AppRoutes: React.FC = () => {
           <Route
             path="user/my-assets"
             element={
-              <ProtectedRoute allowedRoles={['USER']}>
+              <ProtectedRoute allowedRoles={['USER', 'MANAGER']}>
                 <UserDashboard />
               </ProtectedRoute>
             }
@@ -217,8 +202,16 @@ const AppRoutes: React.FC = () => {
           <Route
             path="user/requests"
             element={
-              <ProtectedRoute allowedRoles={['USER']}>
+              <ProtectedRoute allowedRoles={['USER', 'MANAGER']}>
                 <UserRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="user/history"
+            element={
+              <ProtectedRoute allowedRoles={['USER', 'MANAGER']}>
+                <UserAllocationHistory />
               </ProtectedRoute>
             }
           />

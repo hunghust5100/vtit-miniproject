@@ -41,6 +41,10 @@ public class AssetModelServiceImpl implements AssetModelService{
                 .assetType(assetType)
                 .manufacturer(request.getManufacturer())
                 .specification(request.getSpecification())
+                .depreciationMethod(request.getDepreciationMethod())
+                .depreciationRate(request.getDepreciationRate())
+                .depreciationCycle(request.getDepreciationCycle())
+                .adjustmentFactor(request.getAdjustmentFactor())
                 .build();
 
         return mapToAssetModelResponse(assetModelRepository.save(assetModel));
@@ -87,6 +91,10 @@ public class AssetModelServiceImpl implements AssetModelService{
         assetModel.setAssetType(assetType);
         assetModel.setManufacturer(request.getManufacturer());
         assetModel.setSpecification(request.getSpecification());
+        assetModel.setDepreciationMethod(request.getDepreciationMethod());
+        assetModel.setDepreciationRate(request.getDepreciationRate());
+        assetModel.setDepreciationCycle(request.getDepreciationCycle());
+        assetModel.setAdjustmentFactor(request.getAdjustmentFactor());
 
         return mapToAssetModelResponse(assetModelRepository.save(assetModel));
     }
@@ -138,6 +146,10 @@ public class AssetModelServiceImpl implements AssetModelService{
                 .assetTypeName(assetModel.getAssetType().getName())
                 .manufacturer(assetModel.getManufacturer())
                 .specification(assetModel.getSpecification())
+                .depreciationMethod(assetModel.getDepreciationMethod())
+                .depreciationRate(assetModel.getDepreciationRate())
+                .depreciationCycle(assetModel.getDepreciationCycle())
+                .adjustmentFactor(assetModel.getAdjustmentFactor())
                 .build();
     }
 }

@@ -5,12 +5,14 @@ SERVER_PORT=8080
 DB_URL=jdbc:postgresql://localhost:5432/vtit
 DB_USERNAME=postgres
 DB_PASSWORD=12345678
-DB_NAME=database
+DB_NAME=vtit
 
 # Cấu hình JWT
 JWT_SECRET=chuoibimathieuluccuamajwttrongspringsecuritybay
 JWT_EXPIRATION=86400000
 
+# AI Api Key
+OPENAI_API_KEY=apikey
+
 # Cấu hình Frontend API
 VITE_API_URL=http://localhost:8080
-

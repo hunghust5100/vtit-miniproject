@@ -15,4 +15,8 @@ public class AssetModelResponse {
     private Long assetTypeId;
     private String assetTypeName;
     private Map<String, Object> specification;
+    private String depreciationMethod;
+    private Double depreciationRate;
+    private Integer depreciationCycle;
+    private Double adjustmentFactor;
 }

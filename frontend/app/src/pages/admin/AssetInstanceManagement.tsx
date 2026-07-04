@@ -88,9 +88,12 @@ const AssetInstanceManagement: React.FC = () => {
   const [newStatus, setNewStatus] = useState('AVAILABLE');
   
   // Additional update fields
-  const [newDepreciationMethod, setNewDepreciationMethod] = useState('Khấu hao đường thẳng');
+  const [newDepreciationMethod, setNewDepreciationMethod] = useState('STRAIGHT_LINE');
   const [newNetBookValue, setNewNetBookValue] = useState<number | ''>('');
   const [newSalvageValue, setNewSalvageValue] = useState<number | ''>('');
+  const [newDepreciationRate, setNewDepreciationRate] = useState<number | ''>('');
+  const [newDepreciationCycle, setNewDepreciationCycle] = useState<number | ''>('');
+  const [newAdjustmentFactor, setNewAdjustmentFactor] = useState<number | ''>('');
   const [newSpecifications, setNewSpecifications] = useState<{ key: string; value: string }[]>([]);
   
   const [modalError, setModalError] = useState<string | null>(null);
@@ -249,16 +252,19 @@ const AssetInstanceManagement: React.FC = () => {
     setNewPurchaseDate(new Date().toISOString().split('T')[0]);
     setNewPurchasePrice('');
     setNewStatus('AVAILABLE');
-    setNewDepreciationMethod('Khấu hao đường thẳng');
+    setNewDepreciationMethod('STRAIGHT_LINE');
     setNewNetBookValue('');
     setNewSalvageValue('');
+    setNewDepreciationRate('');
+    setNewDepreciationCycle('');
+    setNewAdjustmentFactor('');
     setNewSpecifications([]);
     setModalError(null);
     setIsModalOpen(true);
   };
 
   // Open modal for editing
-  const handleOpenEditModal = (ins: AssetInstanceResponse) => {
+  const handleOpenEditModal = (ins: any) => {
     setEditingInstance(ins);
     setNewModelId(ins.assetModelId);
     setNewSerial(ins.serial);
@@ -267,9 +273,12 @@ const AssetInstanceManagement: React.FC = () => {
     setNewStatus(ins.status);
     
     // Bind additional details
-    setNewDepreciationMethod(ins.depreciationMethod || 'Khấu hao đường thẳng');
+    setNewDepreciationMethod(ins.depreciationMethod || 'STRAIGHT_LINE');
     setNewNetBookValue(ins.netBookValue !== null && ins.netBookValue !== undefined ? ins.netBookValue : '');
     setNewSalvageValue(ins.salvageValue !== null && ins.salvageValue !== undefined ? ins.salvageValue : '');
+    setNewDepreciationRate(ins.depreciationRate !== null && ins.depreciationRate !== undefined ? ins.depreciationRate : '');
+    setNewDepreciationCycle(ins.depreciationCycle !== null && ins.depreciationCycle !== undefined ? ins.depreciationCycle : '');
+    setNewAdjustmentFactor(ins.adjustmentFactor !== null && ins.adjustmentFactor !== undefined ? ins.adjustmentFactor : '');
     
     // Bind specifications
     if (ins.specification) {
@@ -317,6 +326,9 @@ const AssetInstanceManagement: React.FC = () => {
           depreciationMethod: newDepreciationMethod,
           netBookValue: newNetBookValue === '' ? null : Number(newNetBookValue),
           salvageValue: newSalvageValue === '' ? null : Number(newSalvageValue),
+          depreciationRate: newDepreciationRate === '' ? null : Number(newDepreciationRate),
+          depreciationCycle: newDepreciationCycle === '' ? null : Number(newDepreciationCycle),
+          adjustmentFactor: newAdjustmentFactor === '' ? null : Number(newAdjustmentFactor),
           specification: specObject
         });
         toast.showSuccess('Cập nhật thiết bị thành công!');
@@ -326,7 +338,13 @@ const AssetInstanceManagement: React.FC = () => {
           assetModelId: Number(newModelId),
           serial: newSerial,
           purchaseDate: newPurchaseDate,
-          purchasePrice: Number(newPurchasePrice)
+          purchasePrice: Number(newPurchasePrice),
+          depreciationMethod: newDepreciationMethod,
+          netBookValue: newNetBookValue === '' ? null : Number(newNetBookValue),
+          salvageValue: newSalvageValue === '' ? null : Number(newSalvageValue),
+          depreciationRate: newDepreciationRate === '' ? null : Number(newDepreciationRate),
+          depreciationCycle: newDepreciationCycle === '' ? null : Number(newDepreciationCycle),
+          adjustmentFactor: newAdjustmentFactor === '' ? null : Number(newAdjustmentFactor)
         });
         toast.showSuccess('Thêm thiết bị mới thành công!');
       }
@@ -384,6 +402,8 @@ const AssetInstanceManagement: React.FC = () => {
         return { label: 'Đang sử dụng', css: 'active' };
       case 'MAINTENANCE':
         return { label: 'Bảo trì', css: 'inactive' };
+      case 'LIQUIDATED':
+        return { label: 'Đã thanh lý', css: 'inactive' };
       default:
         return { label: status, css: 'inactive' };
     }
@@ -463,6 +483,7 @@ const AssetInstanceManagement: React.FC = () => {
             <option value="AVAILABLE">Sẵn sàng (Available)</option>
             <option value="USING">Đang sử dụng (Using)</option>
             <option value="MAINTENANCE">Đang bảo trì (Maintenance)</option>
+            <option value="LIQUIDATED">Đã thanh lý (Liquidated)</option>
           </select>
         </div>
       </div>
@@ -524,33 +545,33 @@ const AssetInstanceManagement: React.FC = () => {
                     const statusDetail = getStatusDetails(ins.status);
                     return (
                       <tr key={ins.id}>
-                        <td style={{ fontFamily: 'monospace' }}>#{ins.id}</td>
-                        <td>
+                        <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{ins.id}</td>
+                        <td data-label="Số Serial">
                           <div style={{ fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-primary)' }} className="header-sort-content">
                             <HardDrive size={14} style={{ color: 'var(--primary-color)' }} />
                             {ins.serial}
                           </div>
                         </td>
-                        <td style={{ fontWeight: 600 }}>{ins.assetModelName}</td>
-                        <td>{ins.assetTypeName}</td>
-                        <td>
+                        <td data-label="Dòng máy (Model)" style={{ fontWeight: 600 }}>{ins.assetModelName}</td>
+                        <td data-label="Loại thiết bị">{ins.assetTypeName}</td>
+                        <td data-label="Trạng thái">
                           <span className={`status-badge ${statusDetail.css}`}>
                             {statusDetail.label}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Ngày mua">
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                             <Calendar size={13} style={{ color: 'var(--text-secondary)' }} />
                             {ins.purchaseDate ? new Date(ins.purchaseDate).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Đơn giá mua">
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: 'var(--primary-color)' }}>
                             <DollarSign size={13} />
                             {formatPrice(ins.purchasePrice)}
                           </span>
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             <button
                               type="button"
@@ -690,28 +711,28 @@ const AssetInstanceManagement: React.FC = () => {
                   <tbody>
                     {historyList.map((item) => (
                       <tr key={item.id}>
-                        <td style={{ fontFamily: 'monospace' }}>#{item.id}</td>
-                        <td style={{ fontWeight: 600 }}>
+                        <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{item.id}</td>
+                        <td data-label="Nhân sự sử dụng" style={{ fontWeight: 600 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <User size={13} style={{ color: 'var(--text-secondary)' }} />
                             {item.staffName}
                           </div>
                         </td>
-                        <td style={{ fontSize: '13px' }}>
+                        <td data-label="Ngày yêu cầu" style={{ fontSize: '13px' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                             <Clock size={13} style={{ color: 'var(--text-secondary)' }} />
                             {new Date(item.requestAt).toLocaleDateString('vi-VN')}
                           </span>
                         </td>
-                        <td>{getStatusBadge(item.status)}</td>
-                        <td style={{ fontSize: '13px' }}>
+                        <td data-label="Trạng thái">{getStatusBadge(item.status)}</td>
+                        <td data-label="Ngày nhận bàn giao" style={{ fontSize: '13px' }}>
                           {item.receivedAt ? (
                             <span style={{ color: 'var(--success)' }}>{new Date(item.receivedAt).toLocaleDateString('vi-VN')}</span>
                           ) : (
                             <span style={{ color: 'var(--text-muted)' }}>-</span>
                           )}
                         </td>
-                        <td style={{ fontSize: '13px' }}>
+                        <td data-label="Ngày thu hồi" style={{ fontSize: '13px' }}>
                           {item.returnedAt ? (
                             <span style={{ color: 'var(--text-secondary)' }}>{new Date(item.returnedAt).toLocaleDateString('vi-VN')}</span>
                           ) : (
@@ -839,7 +860,13 @@ const AssetInstanceManagement: React.FC = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-secondary)' }}>Phương pháp khấu hao:</span>
-                          <span>{selectedAssetDetail.depreciationMethod === 'STRAIGHT_LINE' ? 'Khấu hao đường thẳng' : selectedAssetDetail.depreciationMethod || 'Khấu hao đường thẳng'}</span>
+                          <span>
+                            {selectedAssetDetail.depreciationMethod === 'STRAIGHT_LINE' ? 'Khấu hao đường thẳng' :
+                             selectedAssetDetail.depreciationMethod === 'DECLINING_BALANCE' ? 'Số dư giảm dần' :
+                             selectedAssetDetail.depreciationMethod === 'UNITS_OF_PRODUCTION' ? 'Theo sản lượng' :
+                             selectedAssetDetail.depreciationMethod === 'LICENSE_KEY' ? 'Khấu hao Key bản quyền' :
+                             selectedAssetDetail.depreciationMethod || 'Khấu hao đường thẳng'}
+                          </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-secondary)' }}>Giá trị còn lại:</span>
@@ -849,6 +876,24 @@ const AssetInstanceManagement: React.FC = () => {
                           <span style={{ color: 'var(--text-secondary)' }}>Giá trị thu hồi:</span>
                           <span>{selectedAssetDetail.salvageValue ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedAssetDetail.salvageValue) : '-'}</span>
                         </div>
+                        {selectedAssetDetail.depreciationRate !== null && selectedAssetDetail.depreciationRate !== undefined && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Tỷ lệ khấu hao:</span>
+                            <span>{selectedAssetDetail.depreciationRate}% / tháng</span>
+                          </div>
+                        )}
+                        {selectedAssetDetail.depreciationCycle !== null && selectedAssetDetail.depreciationCycle !== undefined && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Chu kỳ khấu hao:</span>
+                            <span>{selectedAssetDetail.depreciationCycle} tháng</span>
+                          </div>
+                        )}
+                        {selectedAssetDetail.adjustmentFactor !== null && selectedAssetDetail.adjustmentFactor !== undefined && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Hệ số điều chỉnh:</span>
+                            <span>{selectedAssetDetail.adjustmentFactor}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -993,6 +1038,7 @@ const AssetInstanceManagement: React.FC = () => {
                         <option value="AVAILABLE">Sẵn sàng (Available)</option>
                         <option value="USING">Đang sử dụng (Using)</option>
                         <option value="MAINTENANCE">Đang bảo trì (Maintenance)</option>
+                        <option value="LIQUIDATED">Đã thanh lý (Liquidated)</option>
                       </select>
                     </div>
                   </div>
@@ -1005,15 +1051,18 @@ const AssetInstanceManagement: React.FC = () => {
                     
                     <div>
                       <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Phương pháp khấu hao</label>
-                      <input 
-                        type="text" 
-                        className="search-input" 
-                        style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0 }}
-                        placeholder="Ví dụ: Khấu hao đường thẳng"
+                      <select
+                        className="select-filter"
+                        style={{ width: '100%', backgroundColor: '#fff', borderColor: 'var(--border-color)', borderRadius: '50px' }}
                         value={newDepreciationMethod}
                         onChange={(e) => setNewDepreciationMethod(e.target.value)}
                         disabled={submitting}
-                      />
+                      >
+                        <option value="STRAIGHT_LINE">Đường thẳng (Straight Line)</option>
+                        <option value="DECLINING_BALANCE">Số dư giảm dần (Declining Balance)</option>
+                        <option value="UNITS_OF_PRODUCTION">Sản lượng (Units of Production)</option>
+                        <option value="LICENSE_KEY">Khấu hao Key bản quyền (License Key)</option>
+                      </select>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1038,6 +1087,47 @@ const AssetInstanceManagement: React.FC = () => {
                           placeholder="Ví dụ: 2000000"
                           value={newSalvageValue}
                           onChange={(e) => setNewSalvageValue(e.target.value === '' ? '' : Number(e.target.value))}
+                          disabled={submitting}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ KH (%)</label>
+                        <input 
+                          type="number" 
+                          step="any"
+                          className="search-input" 
+                          style={{ paddingLeft: '12px', paddingRight: '4px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0, fontSize: '12px' }}
+                          placeholder="VD: 10"
+                          value={newDepreciationRate}
+                          onChange={(e) => setNewDepreciationRate(e.target.value === '' ? '' : Number(e.target.value))}
+                          disabled={submitting}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Chu kỳ KH (tháng)</label>
+                        <input 
+                          type="number" 
+                          className="search-input" 
+                          style={{ paddingLeft: '12px', paddingRight: '4px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0, fontSize: '12px' }}
+                          placeholder="VD: 36"
+                          value={newDepreciationCycle}
+                          onChange={(e) => setNewDepreciationCycle(e.target.value === '' ? '' : Number(e.target.value))}
+                          disabled={submitting}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Hệ số đ.chỉnh</label>
+                        <input 
+                          type="number" 
+                          step="any"
+                          className="search-input" 
+                          style={{ paddingLeft: '12px', paddingRight: '4px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0, fontSize: '12px' }}
+                          placeholder="VD: 1.5"
+                          value={newAdjustmentFactor}
+                          onChange={(e) => setNewAdjustmentFactor(e.target.value === '' ? '' : Number(e.target.value))}
                           disabled={submitting}
                         />
                       </div>

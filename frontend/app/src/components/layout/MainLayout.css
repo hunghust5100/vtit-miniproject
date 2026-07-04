@@ -290,6 +290,30 @@
 }
 
 @media (max-width: 768px) {
+  /* Header */
+  .layout-header {
+    padding: 0 12px;
+    height: 56px;
+  }
+
+  .header-logo {
+    height: 28px;
+  }
+
+  .header-right {
+    gap: 10px;
+  }
+
+  .user-details {
+    display: none;
+  }
+
+  .user-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+
   /* On mobile: sidebar floats as an overlay drawer, initially hidden */
   .layout-sidebar {
     transform: translateX(-100%);
@@ -340,6 +364,24 @@
   }
   
   .layout-content {
-    padding: 20px;
+    padding: 14px;
+  }
+
+  .layout-body {
+    margin-top: 56px;
+    min-height: calc(100vh - 56px);
+  }
+
+  .layout-sidebar {
+    top: 56px;
+  }
+
+  .sidebar-overlay {
+    top: 56px;
+  }
+
+  .layout-footer {
+    font-size: 11px;
+    height: 40px;
   }
 }

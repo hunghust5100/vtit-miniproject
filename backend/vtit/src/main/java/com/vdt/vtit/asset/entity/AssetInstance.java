@@ -51,6 +51,12 @@ public class AssetInstance {
 
     private Long salvageValue;
 
+    private Double depreciationRate;
+
+    private Integer depreciationCycle;
+
+    private Double adjustmentFactor;
+
     @OneToMany(
             mappedBy = "assetInstance",
             cascade = CascadeType.ALL,

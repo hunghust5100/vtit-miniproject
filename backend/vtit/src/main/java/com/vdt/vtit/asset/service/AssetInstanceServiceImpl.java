@@ -32,6 +32,13 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
         AssetModel assetModel = assetModelRepository.findById(request.getAssetModelId())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy model"));
 
+        String method = request.getDepreciationMethod() != null ? request.getDepreciationMethod() : assetModel.getDepreciationMethod();
+        Double rate = request.getDepreciationRate() != null ? request.getDepreciationRate() : assetModel.getDepreciationRate();
+        Integer cycle = request.getDepreciationCycle() != null ? request.getDepreciationCycle() : assetModel.getDepreciationCycle();
+        Double factor = request.getAdjustmentFactor() != null ? request.getAdjustmentFactor() : assetModel.getAdjustmentFactor();
+        Long netVal = request.getNetBookValue() != null ? request.getNetBookValue() : request.getPurchasePrice();
+        Long salvage = request.getSalvageValue() != null ? request.getSalvageValue() : 0L;
+
         AssetInstance assetInstance = AssetInstance.builder()
                 .assetModel(assetModel)
                 .serial(request.getSerial())
@@ -39,8 +46,12 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .status("AVAILABLE")
                 .purchaseDate(request.getPurchaseDate())
                 .purchasePrice(request.getPurchasePrice())
-                .depreciationMethod("STRAIGHT_LINE")
-                .netBookValue(request.getPurchasePrice())
+                .depreciationMethod(method != null ? method : "STRAIGHT_LINE")
+                .depreciationRate(rate)
+                .depreciationCycle(cycle)
+                .adjustmentFactor(factor)
+                .netBookValue(netVal)
+                .salvageValue(salvage)
                 .build();
 
         return mapToAssetInstanceResponse(assetInstanceRepository.save(assetInstance));
@@ -93,6 +104,9 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
         assetInstance.setPurchasePrice(request.getPurchasePrice());
         assetInstance.setNetBookValue(request.getNetBookValue());
         assetInstance.setSalvageValue(request.getSalvageValue());
+        assetInstance.setDepreciationRate(request.getDepreciationRate());
+        assetInstance.setDepreciationCycle(request.getDepreciationCycle());
+        assetInstance.setAdjustmentFactor(request.getAdjustmentFactor());
 
         return mapToAssetInstanceResponse(assetInstanceRepository.save(assetInstance));
     }
@@ -119,6 +133,9 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .depreciationMethod(assetInstance.getDepreciationMethod())
                 .netBookValue(assetInstance.getNetBookValue())
                 .salvageValue(assetInstance.getSalvageValue())
+                .depreciationRate(assetInstance.getDepreciationRate())
+                .depreciationCycle(assetInstance.getDepreciationCycle())
+                .adjustmentFactor(assetInstance.getAdjustmentFactor())
                 .build();
     }
 }

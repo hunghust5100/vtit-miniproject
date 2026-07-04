@@ -65,6 +65,10 @@ const AssetModelManagement: React.FC = () => {
   const [newCode, setNewCode] = useState('');
   const [newManufacturer, setNewManufacturer] = useState('');
   const [newAssetTypeId, setNewAssetTypeId] = useState<number | ''>('');
+  const [newDepreciationMethod, setNewDepreciationMethod] = useState('STRAIGHT_LINE');
+  const [newDepreciationRate, setNewDepreciationRate] = useState<number | ''>('');
+  const [newDepreciationCycle, setNewDepreciationCycle] = useState<number | ''>('');
+  const [newAdjustmentFactor, setNewAdjustmentFactor] = useState<number | ''>('');
   const [specRows, setSpecRows] = useState<SpecRow[]>([
     { key: 'RAM', value: '16GB' },
     { key: 'Storage', value: '512GB SSD' },
@@ -72,6 +76,13 @@ const AssetModelManagement: React.FC = () => {
   ]);
   const [modalError, setModalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Instance stats states
+  const [allInstances, setAllInstances] = useState<any[]>([]);
+  const [isInstancesModalOpen, setIsInstancesModalOpen] = useState(false);
+  const [selectedModelForInstances, setSelectedModelForInstances] = useState<AssetModelResponse | null>(null);
+  const [instancesSearchQuery, setInstancesSearchQuery] = useState('');
+  const [instancesStatusFilter, setInstancesStatusFilter] = useState('ALL');
 
   // Confirm Modal State
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -98,6 +109,34 @@ const AssetModelManagement: React.FC = () => {
     setSpecRows(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row));
   };
 
+  const fetchAllInstances = async () => {
+    try {
+      const response = await api.get('/api/v1/assets/instance', {
+        params: { page: 0, size: 10000 }
+      });
+      setAllInstances(response.data?.content || []);
+    } catch (err) {
+      console.error('Failed to fetch all instances for stats', err);
+    }
+  };
+
+  const getModelStats = (modelId: number) => {
+    const modelInstances = allInstances.filter(ins => ins.assetModelId === modelId);
+    const total = modelInstances.length;
+    const using = modelInstances.filter(ins => ins.status?.toUpperCase() === 'USING').length;
+    const ready = modelInstances.filter(ins => ins.status?.toUpperCase() === 'AVAILABLE' || ins.status?.toUpperCase() === 'ACTIVE').length;
+    const repair = modelInstances.filter(ins => ins.status?.toUpperCase() === 'MAINTENANCE').length;
+    const liquidated = modelInstances.filter(ins => ins.status?.toUpperCase() === 'LIQUIDATED').length;
+    return { total, using, ready, repair, liquidated };
+  };
+
+  const handleOpenInstancesModal = (model: AssetModelResponse) => {
+    setSelectedModelForInstances(model);
+    setInstancesSearchQuery('');
+    setInstancesStatusFilter('ALL');
+    setIsInstancesModalOpen(true);
+  };
+
   // Fetch Models
   const fetchModels = async () => {
     setLoading(true);
@@ -117,6 +156,7 @@ const AssetModelManagement: React.FC = () => {
         setTotalPages(data.totalPages || 0);
         setTotalElements(data.totalElements || 0);
       }
+      await fetchAllInstances();
     } catch (err: any) {
       console.error('Fetch asset models failed', err);
       setError('Không thể lấy danh sách dòng máy từ hệ thống. Vui lòng tải lại.');
@@ -181,6 +221,10 @@ const AssetModelManagement: React.FC = () => {
     setNewCode('');
     setNewManufacturer('');
     setNewAssetTypeId('');
+    setNewDepreciationMethod('STRAIGHT_LINE');
+    setNewDepreciationRate('');
+    setNewDepreciationCycle('');
+    setNewAdjustmentFactor('');
     setSpecRows([
       { key: 'RAM', value: '16GB' },
       { key: 'Storage', value: '512GB SSD' },
@@ -191,12 +235,16 @@ const AssetModelManagement: React.FC = () => {
   };
 
   // Open modal for editing
-  const handleOpenEditModal = (model: AssetModelResponse) => {
+  const handleOpenEditModal = (model: any) => {
     setEditingModel(model);
     setNewName(model.name);
     setNewCode(model.code);
     setNewManufacturer(model.manufacturer);
     setNewAssetTypeId(model.assetTypeId);
+    setNewDepreciationMethod(model.depreciationMethod || 'STRAIGHT_LINE');
+    setNewDepreciationRate(model.depreciationRate !== undefined && model.depreciationRate !== null ? model.depreciationRate : '');
+    setNewDepreciationCycle(model.depreciationCycle !== undefined && model.depreciationCycle !== null ? model.depreciationCycle : '');
+    setNewAdjustmentFactor(model.adjustmentFactor !== undefined && model.adjustmentFactor !== null ? model.adjustmentFactor : '');
     const rows = Object.entries(model.specification || {}).map(([k, v]) => ({
       key: k,
       value: String(v)
@@ -230,7 +278,11 @@ const AssetModelManagement: React.FC = () => {
         code: newCode,
         manufacturer: newManufacturer,
         assetTypeId: Number(newAssetTypeId),
-        specification: parsedSpecs
+        specification: parsedSpecs,
+        depreciationMethod: newDepreciationMethod,
+        depreciationRate: newDepreciationRate !== '' ? Number(newDepreciationRate) : null,
+        depreciationCycle: newDepreciationCycle !== '' ? Number(newDepreciationCycle) : null,
+        adjustmentFactor: newAdjustmentFactor !== '' ? Number(newAdjustmentFactor) : null
       };
 
       if (editingModel) {
@@ -385,6 +437,7 @@ const AssetModelManagement: React.FC = () => {
                       </div>
                     </th>
                     <th>Loại thiết bị</th>
+                    <th>Thống kê thiết bị</th>
                     <th>Thông số kỹ thuật</th>
                     <th style={{ textAlign: 'center' }}>Thao tác</th>
                   </tr>
@@ -392,24 +445,60 @@ const AssetModelManagement: React.FC = () => {
                 <tbody>
                   {filteredModels.map((m) => (
                     <tr key={m.id}>
-                      <td style={{ fontFamily: 'monospace' }}>#{m.id}</td>
-                      <td>
+                      <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{m.id}</td>
+                      <td data-label="Tên Model">
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="header-sort-content">
                           <Cpu size={14} style={{ color: 'var(--primary-color)' }} />
                           {m.name}
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Ký hiệu (Code)">
                         <span className="role-badge" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
                           {m.code}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 500 }}>{m.manufacturer}</td>
-                      <td>{m.assetTypeName}</td>
-                      <td style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatSpecs(m.specification)}>
+                      <td data-label="Hãng sản xuất" style={{ fontWeight: 500 }}>{m.manufacturer}</td>
+                      <td data-label="Loại thiết bị">{m.assetTypeName}</td>
+                      <td data-label="Thống kê thiết bị">
+                        {(() => {
+                          const stats = getModelStats(m.id);
+                          return (
+                            <div 
+                              onClick={() => handleOpenInstancesModal(m)} 
+                              style={{ 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '2px',
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                backgroundColor: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-color)',
+                                transition: 'all var(--transition-fast)'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--primary-color)';
+                                e.currentTarget.style.backgroundColor = 'var(--primary-light)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                              }}
+                              title="Nhấn để xem danh sách chi tiết các thiết bị"
+                            >
+                              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Tổng: {stats.total}</span>
+                              <div style={{ display: 'flex', gap: '6px', fontSize: '11px' }}>
+                                <span style={{ color: 'var(--success)', fontWeight: 600 }}>Sử dụng: {stats.using}</span>
+                                <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Khả dụng: {stats.ready}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </td>
+                      <td data-label="Thông số kỹ thuật" style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatSpecs(m.specification)}>
                         {formatSpecs(m.specification)}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
                             type="button"
@@ -568,6 +657,63 @@ const AssetModelManagement: React.FC = () => {
               </div>
 
               <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Phương pháp khấu hao</label>
+                <select
+                  className="select-filter"
+                  style={{ width: '100%', backgroundColor: '#fff', borderColor: 'var(--border-color)', borderRadius: '50px' }}
+                  value={newDepreciationMethod}
+                  onChange={(e) => setNewDepreciationMethod(e.target.value)}
+                  disabled={submitting}
+                >
+                  <option value="STRAIGHT_LINE">Đường thẳng (Straight Line)</option>
+                  <option value="DECLINING_BALANCE">Số dư giảm dần (Declining Balance)</option>
+                  <option value="UNITS_OF_PRODUCTION">Sản lượng (Units of Production)</option>
+                  <option value="LICENSE_KEY">Khấu hao Key bản quyền (License Key)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ khấu hao (%)</label>
+                <input 
+                  type="number" 
+                  step="any"
+                  className="search-input" 
+                  style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)' }}
+                  placeholder="Ví dụ: 10"
+                  value={newDepreciationRate}
+                  onChange={(e) => setNewDepreciationRate(e.target.value === '' ? '' : Number(e.target.value))}
+                  disabled={submitting}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Chu kỳ khấu hao (tháng)</label>
+                <input 
+                  type="number" 
+                  className="search-input" 
+                  style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)' }}
+                  placeholder="Ví dụ: 36"
+                  value={newDepreciationCycle}
+                  onChange={(e) => setNewDepreciationCycle(e.target.value === '' ? '' : Number(e.target.value))}
+                  disabled={submitting}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Hệ số điều chỉnh</label>
+                <input 
+                  type="number" 
+                  step="any"
+                  className="search-input" 
+                  style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)' }}
+                  placeholder="Ví dụ: 1.5"
+                  value={newAdjustmentFactor}
+                  onChange={(e) => setNewAdjustmentFactor(e.target.value === '' ? '' : Number(e.target.value))}
+                  disabled={submitting}
+                />
+              </div>
+
+              <div>
                 <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Thông số kỹ thuật</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
                   {specRows.map((row, index) => (
@@ -637,6 +783,167 @@ const AssetModelManagement: React.FC = () => {
         onCancel={() => setConfirmOpen(false)}
         isDanger={true}
       />
+
+      {/* Instances of Model Modal */}
+      {isInstancesModalOpen && selectedModelForInstances && (
+        <div className="modal-overlay" onClick={() => setIsInstancesModalOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '800px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                Danh sách thiết bị - Dòng máy {selectedModelForInstances.name}
+              </h2>
+              <button 
+                type="button" 
+                onClick={() => setIsInstancesModalOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Statistics Summary Cards */}
+            {(() => {
+              const stats = getModelStats(selectedModelForInstances.id);
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Tổng thiết bị</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</div>
+                  </div>
+                  <div style={{ backgroundColor: '#eff6ff', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(37, 99, 235, 0.1)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#2563eb', textTransform: 'uppercase', marginBottom: '4px' }}>Đang sử dụng</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#1d4ed8' }}>{stats.using}</div>
+                  </div>
+                  <div style={{ backgroundColor: '#ecfdf5', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.1)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#059669', textTransform: 'uppercase', marginBottom: '4px' }}>Sẵn sàng (Khả dụng)</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#047857' }}>{stats.ready}</div>
+                  </div>
+                  <div style={{ backgroundColor: '#fff7ed', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.1)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#d97706', textTransform: 'uppercase', marginBottom: '4px' }}>Sửa chữa</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#b45309' }}>{stats.repair}</div>
+                  </div>
+                  <div style={{ backgroundColor: '#fee2e2', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.1)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--error)', textTransform: 'uppercase', marginBottom: '4px' }}>Thanh lý</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#b91c1c' }}>{stats.liquidated}</div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Filter Bar */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px', backgroundColor: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <div style={{ flex: 1, minWidth: '200px' }}>
+                <input
+                  type="text"
+                  placeholder="Tìm theo số Serial..."
+                  className="search-input"
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '50px', border: '1px solid var(--border-color)', fontSize: '13px' }}
+                  value={instancesSearchQuery}
+                  onChange={(e) => setInstancesSearchQuery(e.target.value)}
+                />
+              </div>
+              <div>
+                <select
+                  className="select-filter"
+                  style={{ padding: '8px 12px', borderRadius: '50px', border: '1px solid var(--border-color)', fontSize: '13px', minWidth: '150px' }}
+                  value={instancesStatusFilter}
+                  onChange={(e) => setInstancesStatusFilter(e.target.value)}
+                >
+                  <option value="ALL">-- Tất cả trạng thái --</option>
+                  <option value="AVAILABLE">Sẵn sàng (Khả dụng)</option>
+                  <option value="USING">Đang sử dụng</option>
+                  <option value="MAINTENANCE">Đang sửa chữa</option>
+                  <option value="LIQUIDATED">Đã thanh lý</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Table */}
+            {(() => {
+              const filteredInstances = allInstances.filter(ins => {
+                if (ins.assetModelId !== selectedModelForInstances.id) return false;
+                
+                const matchesSerial = ins.serial.toLowerCase().includes(instancesSearchQuery.toLowerCase());
+                
+                let matchesStatus = false;
+                if (instancesStatusFilter === 'ALL') {
+                  matchesStatus = true;
+                } else if (instancesStatusFilter === 'AVAILABLE') {
+                  matchesStatus = ins.status?.toUpperCase() === 'AVAILABLE' || ins.status?.toUpperCase() === 'ACTIVE';
+                } else {
+                  matchesStatus = ins.status?.toUpperCase() === instancesStatusFilter;
+                }
+                
+                return matchesSerial && matchesStatus;
+              });
+
+              const getStatusBadge = (status: string) => {
+                switch (status.toUpperCase()) {
+                  case 'AVAILABLE':
+                  case 'ACTIVE':
+                    return <span className="role-badge" style={{ backgroundColor: '#ecfdf5', color: '#047857' }}>Khả dụng</span>;
+                  case 'USING':
+                    return <span className="role-badge" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>Đang sử dụng</span>;
+                  case 'MAINTENANCE':
+                    return <span className="role-badge" style={{ backgroundColor: '#fff7ed', color: '#b45309' }}>Sửa chữa</span>;
+                  case 'LIQUIDATED':
+                    return <span className="role-badge" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}>Thanh lý</span>;
+                  default:
+                    return <span className="role-badge" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>{status}</span>;
+                }
+              };
+
+              return (
+                <div style={{ maxHeight: '350px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                  {filteredInstances.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                      Không có thiết bị nào phù hợp với điều kiện tìm kiếm.
+                    </div>
+                  ) : (
+                    <table className="dashboard-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', zIndex: 1, padding: '10px 12px', fontSize: '12px' }}>Mã thiết bị</th>
+                          <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', zIndex: 1, padding: '10px 12px', fontSize: '12px' }}>Số Serial</th>
+                          <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', zIndex: 1, padding: '10px 12px', fontSize: '12px' }}>Trạng thái</th>
+                          <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', zIndex: 1, padding: '10px 12px', fontSize: '12px' }}>Ngày mua</th>
+                          <th style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', zIndex: 1, padding: '10px 12px', fontSize: '12px', textAlign: 'right' }}>Đơn giá</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredInstances.map((ins) => (
+                          <tr key={ins.id}>
+                            <td data-label="Mã thiết bị" style={{ fontFamily: 'monospace', padding: '10px 12px', fontSize: '13px' }}>#{ins.id}</td>
+                            <td data-label="Số Serial" style={{ fontWeight: 600, padding: '10px 12px', fontSize: '13px' }}>{ins.serial}</td>
+                            <td data-label="Trạng thái" style={{ padding: '10px 12px' }}>{getStatusBadge(ins.status)}</td>
+                            <td data-label="Ngày mua" style={{ padding: '10px 12px', fontSize: '13px' }}>
+                              {ins.purchaseDate ? new Date(ins.purchaseDate).toLocaleDateString('vi-VN') : '-'}
+                            </td>
+                            <td data-label="Đơn giá" style={{ padding: '10px 12px', fontSize: '13px', textAlign: 'right', fontWeight: 600 }}>
+                              {ins.purchasePrice ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(ins.purchasePrice) : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })()}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+              <button 
+                type="button" 
+                className="btn-outline" 
+                onClick={() => setIsInstancesModalOpen(false)}
+                style={{ padding: '8px 20px', borderRadius: '50px' }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

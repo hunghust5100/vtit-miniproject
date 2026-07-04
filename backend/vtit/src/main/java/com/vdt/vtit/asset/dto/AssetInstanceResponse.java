@@ -32,4 +32,10 @@ public class AssetInstanceResponse {
     private Long netBookValue;
 
     private Long salvageValue;
+
+    private Double depreciationRate;
+
+    private Integer depreciationCycle;
+
+    private Double adjustmentFactor;
 }

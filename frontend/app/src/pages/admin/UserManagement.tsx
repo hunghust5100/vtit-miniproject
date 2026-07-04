@@ -403,17 +403,17 @@ const UserManagement: React.FC = () => {
                     const normalizedRole = u.role.replace(/^ROLE_/, '');
                     return (
                       <tr key={u.id}>
-                        <td style={{ fontFamily: 'monospace' }}>#{u.id}</td>
-                        <td style={{ fontWeight: 600 }}>{u.fullName}</td>
-                        <td>{u.email}</td>
-                        <td>{u.phoneNumber || '-'}</td>
-                        <td>
+                        <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{u.id}</td>
+                        <td data-label="Họ và tên" style={{ fontWeight: 600 }}>{u.fullName}</td>
+                        <td data-label="Email">{u.email}</td>
+                        <td data-label="Số điện thoại">{u.phoneNumber || '-'}</td>
+                        <td data-label="Vai trò">
                           <span className={`role-badge ${normalizedRole.toLowerCase()}`}>
                             {normalizedRole === 'ADMIN' ? 'Admin' : normalizedRole === 'MANAGER' ? 'Manager' : 'Nhân viên'}
                           </span>
                         </td>
-                        <td>{new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Ngày tạo">{new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
+                        <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             <button
                               type="button"
@@ -568,23 +568,23 @@ const UserManagement: React.FC = () => {
                   <tbody>
                     {historyList.map((item) => (
                       <tr key={item.id}>
-                        <td style={{ fontFamily: 'monospace' }}>#{item.id}</td>
-                        <td style={{ fontWeight: 600 }}>{item.assetModelName}</td>
-                        <td style={{ fontSize: '13px' }}>
+                        <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{item.id}</td>
+                        <td data-label="Dòng máy (Model)" style={{ fontWeight: 600 }}>{item.assetModelName}</td>
+                        <td data-label="Ngày yêu cầu" style={{ fontSize: '13px' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                             <Clock size={13} style={{ color: 'var(--text-secondary)' }} />
                             {new Date(item.requestAt).toLocaleDateString('vi-VN')}
                           </span>
                         </td>
-                        <td>{getStatusBadge(item.status)}</td>
-                        <td style={{ fontSize: '13px' }}>
+                        <td data-label="Trạng thái">{getStatusBadge(item.status)}</td>
+                        <td data-label="Ngày nhận bàn giao" style={{ fontSize: '13px' }}>
                           {item.receivedAt ? (
                             <span style={{ color: 'var(--success)' }}>{new Date(item.receivedAt).toLocaleDateString('vi-VN')}</span>
                           ) : (
                             <span style={{ color: 'var(--text-muted)' }}>-</span>
                           )}
                         </td>
-                        <td style={{ fontSize: '13px' }}>
+                        <td data-label="Ngày thu hồi" style={{ fontSize: '13px' }}>
                           {item.returnedAt ? (
                             <span style={{ color: 'var(--text-secondary)' }}>{new Date(item.returnedAt).toLocaleDateString('vi-VN')}</span>
                           ) : (

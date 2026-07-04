@@ -11,4 +11,8 @@ public class AssetModelUpdateRequest {
     private String manufacturer;
     private Long assetTypeId;
     private Map<String, Object> specification;
+    private String depreciationMethod;
+    private Double depreciationRate;
+    private Integer depreciationCycle;
+    private Double adjustmentFactor;
 }

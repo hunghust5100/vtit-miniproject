@@ -15,4 +15,16 @@ public class AssetInstanceCreateRequest {
 
     private Long purchasePrice;
 
+    private String depreciationMethod;
+
+    private Double depreciationRate;
+
+    private Integer depreciationCycle;
+
+    private Double adjustmentFactor;
+
+    private Long netBookValue;
+
+    private Long salvageValue;
+
 }

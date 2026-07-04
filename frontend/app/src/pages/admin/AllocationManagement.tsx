@@ -15,8 +15,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   RefreshCw,
-  Archive,
-  CheckCircle2
+  Archive
 } from 'lucide-react';
 import '../admin/ManagementTable.css';
 
@@ -309,24 +308,24 @@ const AllocationManagement: React.FC = () => {
                 <tbody>
                   {filteredAllocations.map((a) => (
                     <tr key={a.id}>
-                      <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>#{a.id}</td>
-                      <td>
+                      <td data-label="Mã số" style={{ fontFamily: 'monospace', fontWeight: 600 }}>#{a.id}</td>
+                      <td data-label="Nhân viên đăng ký">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
                           <User size={14} style={{ color: 'var(--text-secondary)' }} />
                           {a.staffName}
                         </div>
                       </td>
-                      <td style={{ fontWeight: 600 }}>
+                      <td data-label="Thiết bị yêu cầu (Model)" style={{ fontWeight: 600 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <HardDrive size={14} style={{ color: 'var(--primary-color)' }} />
                           {a.assetModelName}
                         </div>
                       </td>
-                      <td style={{ fontSize: '13px' }}>
+                      <td data-label="Ngày yêu cầu" style={{ fontSize: '13px' }}>
                         {new Date(a.requestAt).toLocaleString('vi-VN')}
                       </td>
-                      <td>{getStatusBadge(a.status)}</td>
-                      <td style={{ fontSize: '13px' }}>
+                      <td data-label="Trạng thái">{getStatusBadge(a.status)}</td>
+                      <td data-label="Ngày bàn giao" style={{ fontSize: '13px' }}>
                         {a.receivedAt ? (
                           <span style={{ color: 'var(--success)', fontWeight: 500 }}>
                             {new Date(a.receivedAt).toLocaleString('vi-VN')}
@@ -335,7 +334,7 @@ const AllocationManagement: React.FC = () => {
                           <span style={{ color: 'var(--text-muted)' }}>Chưa nhận</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td data-label="Thao tác xử lý" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           {/* PENDING Actions: Approve / Reject */}
                           {a.status === 'PENDING' && (
@@ -359,26 +358,16 @@ const AllocationManagement: React.FC = () => {
                             </>
                           )}
 
-                          {/* APPROVED Actions: Handover & Export Receipt */}
+                          {/* APPROVED Actions: Export Receipt */}
                           {a.status === 'APPROVED' && (
-                            <>
-                              <button
-                                type="button"
-                                className="btn-primary-sm"
-                                style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#3b82f6' }}
-                                onClick={() => handleUpdateStatus(a.id, 'USING', 'bàn giao thiết bị')}
-                              >
-                                <CheckCircle2 size={14} /> Xác nhận bàn giao
-                              </button>
-                              <button
-                                type="button"
-                                className="btn-outline-sm"
-                                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-                                onClick={() => handleOpenReceipt(a)}
-                              >
-                                <Printer size={14} /> In biên bản
-                              </button>
-                            </>
+                            <button
+                              type="button"
+                              className="btn-outline-sm"
+                              style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                              onClick={() => handleOpenReceipt(a)}
+                            >
+                              <Printer size={14} /> In biên bản
+                            </button>
                           )}
 
                           {/* USING Actions: Export Receipt & Return Asset */}
@@ -564,7 +553,7 @@ const AllocationManagement: React.FC = () => {
                   {/* Document Title */}
                   <div style={{ textAlign: 'center', margin: '30px 0' }}>
                     <h1 style={{ fontSize: '20px', fontWeight: 'bold', textTransform: 'uppercase', margin: '0' }}>BIÊN BẢN BÀN GIAO THIẾT BỊ</h1>
-                    <span style={{ fontStyle: 'italic', fontSize: '14px' }}>(V/v: Bàn giao thiết bị vật lý phục vụ công việc và thay đổi trạng thái bảo mật kết nối Cloud VM)</span>
+                    <span style={{ fontStyle: 'italic', fontSize: '14px' }}>(V/v: Bàn giao thiết bị vật lý phục vụ công việc)</span>
                   </div>
 
                   {/* Legal base info */}
@@ -626,7 +615,7 @@ const AllocationManagement: React.FC = () => {
                     <h3 style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '15px', margin: '0 0 8px 0' }}>Cam kết sử dụng & An toàn thông tin:</h3>
                     <ol style={{ paddingLeft: '20px', margin: '0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <li>Bên nhận có trách nhiệm bảo quản, giữ gìn thiết bị được bàn giao theo đúng quy định sử dụng tài sản của Tập đoàn.</li>
-                      <li>Sau khi xác nhận bàn giao hoàn tất trên hệ thống, trạng thái máy ảo kết nối (Cloud VM) của Bên nhận sẽ tự động chuyển sang **ĐANG HOẠT ĐỘNG (ACTIVE)** để tiếp tục sử dụng.</li>
+                      <li>Bên nhận cam kết sử dụng thiết bị đúng mục đích công việc và tuân thủ các quy định về an toàn thông tin của Tập đoàn.</li>
                       <li>Biên bản này được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản để đối chiếu.</li>
                     </ol>
                   </div>

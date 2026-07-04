@@ -12,7 +12,8 @@ import {
   HardDrive,
   FileCheck,
   ClipboardList,
-  User
+  User,
+  History
 } from 'lucide-react';
 import viettelLogo from '../../assets/viettel_logo.png';
 import './MainLayout.css';
@@ -88,15 +89,17 @@ const MainLayout: React.FC = () => {
     } else if (role === 'MANAGER') {
       items.push(
         { path: '/manager', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        { path: '/manager/asset-instances', label: 'Quản lý Thiết bị', icon: <HardDrive size={20} /> },
-        { path: '/manager/allocations', label: 'Phê duyệt cấp phát', icon: <FileCheck size={20} /> }
+        { path: '/user/my-assets', label: 'Thiết bị của tôi', icon: <HardDrive size={20} /> },
+        { path: '/user/requests', label: 'Yêu cầu cấp phát', icon: <ClipboardList size={20} /> },
+        { path: '/user/history', label: 'Lịch sử cấp phát', icon: <History size={20} /> }
       );
     } else {
       // USER
       items.push(
         { path: '/user', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
         { path: '/user/my-assets', label: 'Thiết bị của tôi', icon: <HardDrive size={20} /> },
-        { path: '/user/requests', label: 'Yêu cầu cấp phát', icon: <ClipboardList size={20} /> }
+        { path: '/user/requests', label: 'Yêu cầu cấp phát', icon: <ClipboardList size={20} /> },
+        { path: '/user/history', label: 'Lịch sử cấp phát', icon: <History size={20} /> }
       );
     }
     
@@ -123,7 +126,6 @@ const MainLayout: React.FC = () => {
           
           <div className="header-logo-container">
             <img src={viettelLogo} alt="Viettel Logo" className="header-logo" />
-            <span className="header-title">VTIT Asset</span>
           </div>
         </div>
 

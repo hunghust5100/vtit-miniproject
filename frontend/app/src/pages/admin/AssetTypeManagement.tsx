@@ -287,15 +287,15 @@ const AssetTypeManagement: React.FC = () => {
                 <tbody>
                   {filteredTypes.map((t) => (
                     <tr key={t.id}>
-                      <td style={{ fontFamily: 'monospace' }}>#{t.id}</td>
-                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{t.name}</td>
-                      <td>
+                      <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{t.id}</td>
+                      <td data-label="Tên loại thiết bị" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{t.name}</td>
+                      <td data-label="Mã định danh (Code)">
                         <span className="role-badge" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary-color)', fontFamily: 'monospace', fontWeight: 'bold' }}>
                           {t.code}
                         </span>
                       </td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{t.description || 'Chưa có mô tả'}</td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td data-label="Mô tả" style={{ color: 'var(--text-secondary)' }}>{t.description || 'Chưa có mô tả'}</td>
+                      <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
                             type="button"

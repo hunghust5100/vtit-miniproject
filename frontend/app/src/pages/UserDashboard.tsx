@@ -233,14 +233,14 @@ const UserDashboard: React.FC = () => {
               <tbody>
                 {assignedAssets.map((asset) => (
                   <tr key={asset.id}>
-                    <td style={{ fontFamily: 'monospace' }}>#{asset.id}</td>
-                    <td style={{ fontWeight: 600 }}>{asset.name}</td>
-                    <td style={{ fontFamily: 'monospace', color: 'var(--text-secondary)', fontWeight: 500 }}>{asset.serial}</td>
-                    <td>{asset.assignedDate}</td>
-                    <td>
+                    <td data-label="Mã số thiết bị" style={{ fontFamily: 'monospace' }}>#{asset.id}</td>
+                    <td data-label="Dòng máy (Model)" style={{ fontWeight: 600 }}>{asset.name}</td>
+                    <td data-label="Số Serial" style={{ fontFamily: 'monospace', color: 'var(--text-secondary)', fontWeight: 500 }}>{asset.serial}</td>
+                    <td data-label="Ngày bàn giao">{asset.assignedDate}</td>
+                    <td data-label="Trạng thái sử dụng">
                       <span className="status-badge active">Đang sử dụng</span>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                       <button
                         type="button"
                         className="btn-outline-sm"
@@ -352,22 +352,9 @@ const UserDashboard: React.FC = () => {
                       </h3>
                       <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         
-                        {/* Specifications from Model */}
-                        {selectedModelDetail?.specification && Object.keys(selectedModelDetail.specification).length > 0 && (
-                          <div>
-                            <div style={{ fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '12px' }}>Thông số từ hãng:</div>
-                            {Object.entries(selectedModelDetail.specification).map(([key, val]) => (
-                              <div key={`model-${key}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed var(--border-color)' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>{key}:</span>
-                                <span style={{ fontWeight: 600 }}>{String(val)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
                         {/* Specifications from Instance */}
                         {selectedAssetDetail.specification && Object.keys(selectedAssetDetail.specification).length > 0 ? (
-                          <div style={{ marginTop: selectedModelDetail?.specification ? '10px' : 0 }}>
+                          <div>
                             <div style={{ fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '12px' }}>Thông số riêng thiết bị:</div>
                             {Object.entries(selectedAssetDetail.specification).map(([key, val]) => (
                               <div key={`instance-${key}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed var(--border-color)' }}>
@@ -377,9 +364,7 @@ const UserDashboard: React.FC = () => {
                             ))}
                           </div>
                         ) : (
-                          (!selectedModelDetail?.specification || Object.keys(selectedModelDetail.specification).length === 0) && (
-                            <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>Không có thông số kỹ thuật.</div>
-                          )
+                          <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>Không có thông số kỹ thuật.</div>
                         )}
                       </div>
                     </div>

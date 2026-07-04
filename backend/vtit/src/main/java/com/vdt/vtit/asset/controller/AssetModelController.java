@@ -4,7 +4,6 @@ import com.vdt.vtit.asset.dto.AssetInstanceResponse;
 import com.vdt.vtit.asset.dto.AssetModelCreateRequest;
 import com.vdt.vtit.asset.dto.AssetModelResponse;
 import com.vdt.vtit.asset.dto.AssetModelUpdateRequest;
-import com.vdt.vtit.asset.entity.AssetInstance;
 import com.vdt.vtit.asset.service.AssetModelService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +51,8 @@ public class AssetModelController {
     ) {
         return ResponseEntity.ok(assetModelService.getAssetInstanceOfModel(status, assetModelId, page, size, sortBy, sortDir));
     }
+
+
 
     @PutMapping("/{id}")
     public ResponseEntity<AssetModelResponse> updateAsseModel(@PathVariable Long id, @Valid @RequestBody AssetModelUpdateRequest request) {
