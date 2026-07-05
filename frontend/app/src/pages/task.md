@@ -1,18 +1,12 @@
-- [x] Sửa đổi định tuyến của Manager và User trong `AppRoutes.tsx`
-- [x] Cập nhật menu của Manager trong `MainLayout.tsx` để có đầy đủ chức năng nhân viên
-- [x] Xây dựng lại `ManagerDashboard.tsx` không có mock data, sử dụng REST API thực tế
-- [x] Loại bỏ mock fallback khỏi `AdminDashboard.tsx`
-- [x] Loại bỏ nội dung máy ảo/Cloud VM khỏi in biên bản bàn giao PDF trong `AllocationManagement.tsx`
-- [x] Chuyển đổi tính năng "Xác nhận bàn giao" sang phía User dưới dạng nút "Xác nhận đã nhận" trong `UserRequests.tsx`
-- [x] Loại bỏ nút "Xác nhận bàn giao" khỏi Admin trong `AllocationManagement.tsx`
-- [x] Loại bỏ dòng chữ "VTIT Asset" cạnh logo ở header trong `MainLayout.tsx`
-- [x] Tạo trang `UserAllocationHistory.tsx` riêng để quản lý lịch sử cấp phát của nhân viên/trưởng phòng với bộ lọc trạng thái và nút Xác nhận nhận thiết bị.
-- [x] Liên kết trang lịch sử cấp phát mới vào `AppRoutes.tsx` và `MainLayout.tsx`.
-- [x] Tối giản hóa trang tạo yêu cầu `UserRequests.tsx` chỉ tập trung vào form tạo và sơ đồ quy trình.
-- [x] Điều chỉnh chi tiết thiết bị cụ thể (Instance) không hiển thị thông số hãng (Model specs) nữa ở cả `UserDashboard.tsx` và `UserAllocationHistory.tsx`.
-- [x] Thêm cột Thống kê thiết bị và nút bấm mở modal chi tiết danh sách thiết bị hiện có, đang sử dụng, khả dụng... của model trong `AssetModelManagement.tsx`.
-- [x] Thêm trạng thái "Đã thanh lý (LIQUIDATED)" cho các thiết bị cụ thể (Instance) trong `AssetInstanceManagement.tsx` (bộ lọc tìm kiếm và form thêm mới/sửa đổi).
-- [x] Tích hợp cấu hình Khấu hao (Phương pháp khấu hao, Tỷ lệ khấu hao %, Chu kỳ khấu hao, Hệ số điều chỉnh) vào thực thể AssetModel, thực thể AssetInstance và các DTO tương ứng ở backend.
-- [x] Cập nhật logic tạo mới thiết bị ở backend tự động kế thừa cấu hình khấu hao từ dòng máy (Model) cha nếu admin không cung cấp giá trị riêng.
-- [x] Cập nhật form Thêm mới/Chỉnh sửa Dòng máy (Model) và Thiết bị (Instance) ở frontend để cấu hình đầy đủ các trường khấu hao mới.
-- [x] Kiểm tra lỗi biên dịch của dự án và chạy thử nghiệm
+- [x] Kích hoạt `@EnableScheduling` trong `VtitApplication.java`
+- [x] Tạo DTO `DepreciationAlertResponse.java`
+- [x] Cập nhật `DepreciationService` và `DepreciationServiceImpl`
+- [x] Tạo class `DepreciationScheduler.java`
+- [x] Cập nhật `DepreciationController.java`
+- [x] Cập nhật `AdminDashboard.tsx` ở frontend
+- [x] Sửa lỗi parse JWT của `JwtAuthenticationFilter.java` đưa vào khối try-catch để trả về đúng mã 401
+- [x] Sửa lỗi tràn chiều cao modal của quản lý dòng máy (Model) trong `AssetModelManagement.tsx`
+- [x] Cân chỉnh kích thước và padding các input thông số khấu hao (tỷ lệ, chu kỳ, hệ số) trong `AssetInstanceManagement.tsx` cho đồng bộ
+- [x] Khắc phục lỗi xếp chồng (Stacking Context) làm modal chui xuống dưới Header bằng cách nâng z-index động của `.layout-body` qua thuộc tính `:has(.modal-overlay)`
+- [x] Biên dịch thử backend (`./gradlew compileJava`)
+- [x] Build thử frontend (`npm run build`)

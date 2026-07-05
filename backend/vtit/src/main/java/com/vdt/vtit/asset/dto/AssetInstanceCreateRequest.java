@@ -27,4 +27,6 @@ public class AssetInstanceCreateRequest {
 
     private Long salvageValue;
 
+    private Long maintenanceCost;
+
 }

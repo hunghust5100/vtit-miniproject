@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { 
   Search, 
@@ -583,9 +584,9 @@ const AssetModelManagement: React.FC = () => {
       </div>
 
       {/* Add / Edit Model Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-card" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               {editingModel ? 'Chỉnh sửa dòng máy (Model)' : 'Thêm dòng máy (Model) mới'}
             </h2>
@@ -769,7 +770,8 @@ const AssetModelManagement: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <ConfirmModal
@@ -785,7 +787,7 @@ const AssetModelManagement: React.FC = () => {
       />
 
       {/* Instances of Model Modal */}
-      {isInstancesModalOpen && selectedModelForInstances && (
+      {isInstancesModalOpen && selectedModelForInstances && createPortal(
         <div className="modal-overlay" onClick={() => setIsInstancesModalOpen(false)}>
           <div className="modal-card" style={{ maxWidth: '800px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
@@ -942,7 +944,8 @@ const AssetModelManagement: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

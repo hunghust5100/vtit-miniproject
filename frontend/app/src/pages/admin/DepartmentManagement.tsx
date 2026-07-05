@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { 
   Search, 
@@ -547,9 +548,9 @@ const DepartmentManagement: React.FC = () => {
       </div>
 
       {/* Add / Edit Department Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               {editingDepartment ? 'Chỉnh sửa phòng ban' : 'Thêm phòng ban mới'}
             </h2>
@@ -641,13 +642,14 @@ const DepartmentManagement: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Manage Staff Modal */}
-      {isStaffModalOpen && selectedDept && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '600px', width: '95%' }}>
+      {isStaffModalOpen && selectedDept && createPortal(
+        <div className="modal-overlay" onClick={() => setIsStaffModalOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '600px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               Quản lý nhân sự - {selectedDept.name}
             </h2>
@@ -735,7 +737,8 @@ const DepartmentManagement: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <ConfirmModal

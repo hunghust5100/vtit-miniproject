@@ -3,6 +3,7 @@ package com.vdt.vtit.asset.controller;
 import com.vdt.vtit.asset.dto.AssetInstanceCreateRequest;
 import com.vdt.vtit.asset.dto.AssetInstanceResponse;
 import com.vdt.vtit.asset.dto.AssetInstanceUpdateRequest;
+import com.vdt.vtit.asset.dto.UnusedAssetsReportResponse;
 import com.vdt.vtit.asset.service.AssetInstanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,5 +53,10 @@ public class AssetInstanceController {
         assetInstanceService.deleteAssetInstanceById(id);
 
         return ResponseEntity.ok(Map.of("Message", "Xóa thiết bị thành công"));
+    }
+
+    @GetMapping("/unused-report")
+    public ResponseEntity<UnusedAssetsReportResponse> getUnusedAssetsReport() {
+        return ResponseEntity.ok(assetInstanceService.getUnusedAssetsReport());
     }
 }

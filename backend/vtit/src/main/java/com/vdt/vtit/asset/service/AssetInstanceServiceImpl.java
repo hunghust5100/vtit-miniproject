@@ -3,6 +3,7 @@ package com.vdt.vtit.asset.service;
 import com.vdt.vtit.asset.dto.AssetInstanceCreateRequest;
 import com.vdt.vtit.asset.dto.AssetInstanceResponse;
 import com.vdt.vtit.asset.dto.AssetInstanceUpdateRequest;
+import com.vdt.vtit.asset.dto.UnusedAssetsReportResponse;
 import com.vdt.vtit.asset.entity.AssetInstance;
 import com.vdt.vtit.asset.entity.AssetModel;
 import com.vdt.vtit.asset.repository.AssetInstanceRepository;
@@ -16,6 +17,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +56,7 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .adjustmentFactor(factor)
                 .netBookValue(netVal)
                 .salvageValue(salvage)
+                .maintenanceCost(request.getMaintenanceCost())
                 .build();
 
         return mapToAssetInstanceResponse(assetInstanceRepository.save(assetInstance));
@@ -107,6 +112,7 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
         assetInstance.setDepreciationRate(request.getDepreciationRate());
         assetInstance.setDepreciationCycle(request.getDepreciationCycle());
         assetInstance.setAdjustmentFactor(request.getAdjustmentFactor());
+        assetInstance.setMaintenanceCost(request.getMaintenanceCost());
 
         return mapToAssetInstanceResponse(assetInstanceRepository.save(assetInstance));
     }
@@ -136,6 +142,35 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .depreciationRate(assetInstance.getDepreciationRate())
                 .depreciationCycle(assetInstance.getDepreciationCycle())
                 .adjustmentFactor(assetInstance.getAdjustmentFactor())
+                .maintenanceCost(assetInstance.getMaintenanceCost())
+                .build();
+    }
+
+    @Override
+    public UnusedAssetsReportResponse getUnusedAssetsReport() {
+        LocalDate threeMonthsAgo = LocalDate.now().minusMonths(3);
+        LocalDateTime threeMonthsAgoDateTime = LocalDateTime.now().minusMonths(3);
+
+        List<AssetInstance> unusedAssets = assetInstanceRepository.findUnusedAssets(threeMonthsAgo, threeMonthsAgoDateTime);
+
+        long count = unusedAssets.size();
+        long totalNetBookValue = 0;
+        long totalPurchasePrice = 0;
+
+        List<AssetInstanceResponse> responseList = new ArrayList<>();
+        for (AssetInstance asset : unusedAssets) {
+            long netVal = asset.getNetBookValue() != null ? asset.getNetBookValue() : (asset.getPurchasePrice() != null ? asset.getPurchasePrice() : 0L);
+            long price = asset.getPurchasePrice() != null ? asset.getPurchasePrice() : 0L;
+            totalNetBookValue += netVal;
+            totalPurchasePrice += price;
+            responseList.add(mapToAssetInstanceResponse(asset));
+        }
+
+        return UnusedAssetsReportResponse.builder()
+                .count(count)
+                .totalNetBookValue(totalNetBookValue)
+                .totalPurchasePrice(totalPurchasePrice)
+                .unusedAssets(responseList)
                 .build();
     }
 }

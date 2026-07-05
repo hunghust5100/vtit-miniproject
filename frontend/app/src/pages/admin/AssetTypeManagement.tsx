@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { 
   Search, 
@@ -380,9 +381,9 @@ const AssetTypeManagement: React.FC = () => {
       </div>
 
       {/* Add / Edit Type Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               {editingType ? 'Chỉnh sửa loại thiết bị' : 'Thêm loại thiết bị mới'}
             </h2>
@@ -442,7 +443,8 @@ const AssetTypeManagement: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <ConfirmModal

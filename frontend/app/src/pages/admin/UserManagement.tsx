@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { 
   Search, 
@@ -532,9 +533,9 @@ const UserManagement: React.FC = () => {
       </div>
 
       {/* Allocation History Modal */}
-      {isHistoryOpen && selectedUser && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '800px', width: '100%' }}>
+      {isHistoryOpen && selectedUser && createPortal(
+        <div className="modal-overlay" onClick={() => setIsHistoryOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '800px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <History size={20} style={{ color: 'var(--primary-color)' }} />
@@ -598,13 +599,14 @@ const UserManagement: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Add / Edit User Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               {editingUser ? 'Chỉnh sửa thông tin người dùng' : 'Thêm người dùng mới'}
             </h2>
@@ -722,7 +724,8 @@ const UserManagement: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <ConfirmModal

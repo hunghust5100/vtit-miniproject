@@ -20,4 +20,6 @@ public interface AllocationService {
     AllocationRespond updateAllocation(Long id, String status);
 
     void deleteAllocation(Long id);
+
+    void releaseExpiredAllocations();
 }

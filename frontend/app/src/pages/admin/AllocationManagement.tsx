@@ -75,6 +75,16 @@ const AllocationManagement: React.FC = () => {
   const [confirmMessage, setConfirmMessage] = useState('');
   const [onConfirmCallback, setOnConfirmCallback] = useState<(() => void) | null>(null);
 
+  // Time state for countdown
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Handover Modal State
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [selectedAlloc, setSelectedAlloc] = useState<AllocationItem | null>(null);
@@ -198,8 +208,30 @@ const AllocationManagement: React.FC = () => {
 
   const filteredAllocations = getFilteredAllocations();
 
-  const getStatusBadge = (statusStr: string) => {
+  const getStatusBadge = (statusStr: string, requestAtStr?: string) => {
     const status = statusStr ? statusStr.toUpperCase() : 'PENDING';
+    
+    if (status === 'PENDING' && requestAtStr) {
+      const expirationTime = new Date(requestAtStr).getTime() + 24 * 60 * 60 * 1000;
+      const diff = expirationTime - currentTime;
+      if (diff <= 0) {
+        return <span className="status-badge inactive" style={{ backgroundColor: '#f1f5f9', color: '#94a3b8' }}>Đã hủy (Quá hạn)</span>;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const pad = (num: number) => String(num).padStart(2, '0');
+      const timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      
+      return (
+        <span className="status-badge pending" style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '6px 12px' }}>
+          <span>Chờ phê duyệt</span>
+          <span style={{ fontSize: '10px', opacity: 0.85, fontFamily: 'monospace' }}>Còn lại: {timeString}</span>
+        </span>
+      );
+    }
+
     switch (status) {
       case 'PENDING':
         return <span className="status-badge pending">Chờ phê duyệt</span>;
@@ -324,7 +356,7 @@ const AllocationManagement: React.FC = () => {
                       <td data-label="Ngày yêu cầu" style={{ fontSize: '13px' }}>
                         {new Date(a.requestAt).toLocaleString('vi-VN')}
                       </td>
-                      <td data-label="Trạng thái">{getStatusBadge(a.status)}</td>
+                      <td data-label="Trạng thái">{getStatusBadge(a.status, a.requestAt)}</td>
                       <td data-label="Ngày bàn giao" style={{ fontSize: '13px' }}>
                         {a.receivedAt ? (
                           <span style={{ color: 'var(--success)', fontWeight: 500 }}>
@@ -337,7 +369,7 @@ const AllocationManagement: React.FC = () => {
                       <td data-label="Thao tác xử lý" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           {/* PENDING Actions: Approve / Reject */}
-                          {a.status === 'PENDING' && (
+                          {a.status === 'PENDING' && (new Date(a.requestAt).getTime() + 24 * 60 * 60 * 1000 > currentTime) && (
                             <>
                               <button
                                 type="button"
@@ -393,7 +425,7 @@ const AllocationManagement: React.FC = () => {
                           )}
                           
                           {/* Default fallback info */}
-                          {['REJECTED', 'CANCELED', 'RETURNED'].includes(a.status) && (
+                          {(['REJECTED', 'CANCELED', 'RETURNED'].includes(a.status) || (a.status === 'PENDING' && new Date(a.requestAt).getTime() + 24 * 60 * 60 * 1000 <= currentTime)) && (
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Lưu trữ</span>
                           )}
                         </div>

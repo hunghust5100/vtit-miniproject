@@ -141,6 +141,11 @@
   position: relative;
 }
 
+/* Elevate layout body stacking context above header when a modal is active */
+.layout-body:has(.modal-overlay) {
+  z-index: 1001;
+}
+
 /* Sidebar */
 .layout-sidebar {
   width: var(--sidebar-width);

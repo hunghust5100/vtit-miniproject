@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -60,6 +61,16 @@ const UserAllocationHistory: React.FC = () => {
   const [confirmTitle, setConfirmTitle] = useState('');
   const [confirmMessage, setConfirmMessage] = useState('');
   const [onConfirmCallback, setOnConfirmCallback] = useState<(() => void) | null>(null);
+
+  // Time state for countdown
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const triggerConfirm = (title: string, message: string, callback: () => void) => {
     setConfirmTitle(title);
@@ -183,8 +194,30 @@ const UserAllocationHistory: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (statusStr: string) => {
+  const getStatusBadge = (statusStr: string, requestAtStr?: string) => {
     const status = statusStr ? statusStr.toUpperCase() : 'PENDING';
+    
+    if (status === 'PENDING' && requestAtStr) {
+      const expirationTime = new Date(requestAtStr).getTime() + 24 * 60 * 60 * 1000;
+      const diff = expirationTime - currentTime;
+      if (diff <= 0) {
+        return <span className="status-badge inactive" style={{ backgroundColor: '#f1f5f9', color: '#94a3b8' }}>Đã hủy (Quá hạn)</span>;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const pad = (num: number) => String(num).padStart(2, '0');
+      const timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      
+      return (
+        <span className="status-badge pending" style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '6px 12px' }}>
+          <span>Chờ phê duyệt</span>
+          <span style={{ fontSize: '10px', opacity: 0.85, fontFamily: 'monospace' }}>Còn lại: {timeString}</span>
+        </span>
+      );
+    }
+
     switch (status) {
       case 'PENDING':
         return <span className="status-badge pending">Chờ phê duyệt</span>;
@@ -303,7 +336,7 @@ const UserAllocationHistory: React.FC = () => {
                           {new Date(a.requestAt).toLocaleString('vi-VN')}
                         </span>
                       </td>
-                      <td data-label="Trạng thái">{getStatusBadge(a.status)}</td>
+                      <td data-label="Trạng thái">{getStatusBadge(a.status, a.requestAt)}</td>
                       <td data-label="Ngày nhận thực tế">
                         {a.receivedAt ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
@@ -412,9 +445,9 @@ const UserAllocationHistory: React.FC = () => {
       </div>
 
       {/* Device Details Modal */}
-      {isDetailOpen && (
-        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }}>
-          <div className="modal-card" style={{ maxWidth: '800px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', border: '1px solid var(--border-color)', maxHeight: '90vh', overflowY: 'auto' }}>
+      {isDetailOpen && createPortal(
+        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }} onClick={() => setIsDetailOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '800px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', border: '1px solid var(--border-color)', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <HardDrive size={20} style={{ color: 'var(--primary-color)' }} />
@@ -521,7 +554,7 @@ const UserAllocationHistory: React.FC = () => {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
 
       <ConfirmModal
         isOpen={confirmOpen}

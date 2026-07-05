@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import viettelLogo from '../../assets/viettel_logo.png';
 import './MainLayout.css';
+import ChatbotWidget from '../chatbot/ChatbotWidget';
 
 interface MenuItem {
   path: string;
@@ -190,7 +191,7 @@ const MainLayout: React.FC = () => {
         <div 
           className={`layout-content-wrapper ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}
         >
-          <main className="layout-content animate-fade-in">
+          <main className="layout-content">
             <Outlet />
           </main>
 
@@ -200,6 +201,9 @@ const MainLayout: React.FC = () => {
           </footer>
         </div>
       </div>
+      
+      {/* AI Chatbot Widget (Admin Only) */}
+      {role === 'ADMIN' && <ChatbotWidget />}
     </div>
   );
 };

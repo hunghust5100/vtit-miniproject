@@ -32,6 +32,7 @@ public class AllocationServiceImpl implements AllocationService{
 
     @Override
     public AllocationRespond createNewAllocation(AllocationCreateRequest request) {
+        releaseExpiredAllocations();
         User staff = userRepository.findById(request.getStaffId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên"));
 
@@ -65,6 +66,7 @@ public class AllocationServiceImpl implements AllocationService{
 
     @Override
     public Page<AllocationRespond> getAllocationPagination(int page, int size, String sortBy, String sortDir) {
+        releaseExpiredAllocations();
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -78,6 +80,7 @@ public class AllocationServiceImpl implements AllocationService{
 
     @Override
     public AllocationRespond getAllocationById(Long id) {
+        releaseExpiredAllocations();
         Allocation allocation = allocationRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy lịch sử"));
 
@@ -86,7 +89,7 @@ public class AllocationServiceImpl implements AllocationService{
 
     @Override
     public Page<AllocationRespond> getAllocationByStaff(Long staffId, int page, int size, String sortBy, String sortDir) {
-
+        releaseExpiredAllocations();
         User staff = userRepository.findById(staffId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên"));
 
@@ -103,6 +106,7 @@ public class AllocationServiceImpl implements AllocationService{
 
     @Override
     public Page<AllocationRespond> getAllocationByAssetInstance(Long assetInstanceId, int page, int size, String sortBy, String sortDir) {
+        releaseExpiredAllocations();
         AssetInstance assetInstance = assetInstanceRepository.findById(assetInstanceId)
                 .orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy thiết bị"));
 
@@ -169,6 +173,23 @@ public class AllocationServiceImpl implements AllocationService{
         Allocation allocation = allocationRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy lịch sử"));
         allocationRepository.delete(allocation);
+    }
+
+    @Override
+    public void releaseExpiredAllocations() {
+        LocalDateTime expirationTime = LocalDateTime.now().minusHours(24);
+        List<Allocation> expiredAllocations = allocationRepository.findByStatusAndRequestAtBefore("PENDING", expirationTime);
+        if (!expiredAllocations.isEmpty()) {
+            for (Allocation allocation : expiredAllocations) {
+                allocation.setStatus("CANCELED");
+                allocation.setActionAt(LocalDateTime.now());
+                AssetInstance asset = allocation.getAssetInstance();
+                if (asset != null) {
+                    asset.setStatus("AVAILABLE");
+                }
+            }
+            allocationRepository.saveAll(expiredAllocations);
+        }
     }
 
     private AllocationRespond mapToAllocationResponse(Allocation allocation) {

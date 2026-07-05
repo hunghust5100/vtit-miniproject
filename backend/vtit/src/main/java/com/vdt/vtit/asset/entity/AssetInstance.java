@@ -57,6 +57,8 @@ public class AssetInstance {
 
     private Double adjustmentFactor;
 
+    private Long maintenanceCost;
+
     @OneToMany(
             mappedBy = "assetInstance",
             cascade = CascadeType.ALL,

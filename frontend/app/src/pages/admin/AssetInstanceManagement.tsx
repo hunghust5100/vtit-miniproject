@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { 
   Search, 
@@ -18,7 +19,8 @@ import {
   History,
   Clock,
   User,
-  Eye
+  Eye,
+  Wrench
 } from 'lucide-react';
 import './ManagementTable.css';
 import { useToast } from '../../context/ToastContext';
@@ -37,6 +39,7 @@ interface AssetInstanceResponse {
   netBookValue?: number;
   salvageValue?: number;
   specification?: Record<string, any>;
+  maintenanceCost?: number;
 }
 
 interface AssetModelOption {
@@ -85,6 +88,7 @@ const AssetInstanceManagement: React.FC = () => {
   const [newSerial, setNewSerial] = useState('');
   const [newPurchaseDate, setNewPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
   const [newPurchasePrice, setNewPurchasePrice] = useState<number | ''>('');
+  const [newMaintenanceCost, setNewMaintenanceCost] = useState<number | ''>('');
   const [newStatus, setNewStatus] = useState('AVAILABLE');
   
   // Additional update fields
@@ -251,6 +255,7 @@ const AssetInstanceManagement: React.FC = () => {
     setNewSerial('');
     setNewPurchaseDate(new Date().toISOString().split('T')[0]);
     setNewPurchasePrice('');
+    setNewMaintenanceCost('');
     setNewStatus('AVAILABLE');
     setNewDepreciationMethod('STRAIGHT_LINE');
     setNewNetBookValue('');
@@ -270,6 +275,7 @@ const AssetInstanceManagement: React.FC = () => {
     setNewSerial(ins.serial);
     setNewPurchaseDate(ins.purchaseDate ? ins.purchaseDate.split('T')[0] : '');
     setNewPurchasePrice(ins.purchasePrice);
+    setNewMaintenanceCost(ins.maintenanceCost !== null && ins.maintenanceCost !== undefined ? ins.maintenanceCost : '');
     setNewStatus(ins.status);
     
     // Bind additional details
@@ -329,6 +335,7 @@ const AssetInstanceManagement: React.FC = () => {
           depreciationRate: newDepreciationRate === '' ? null : Number(newDepreciationRate),
           depreciationCycle: newDepreciationCycle === '' ? null : Number(newDepreciationCycle),
           adjustmentFactor: newAdjustmentFactor === '' ? null : Number(newAdjustmentFactor),
+          maintenanceCost: newMaintenanceCost === '' ? null : Number(newMaintenanceCost),
           specification: specObject
         });
         toast.showSuccess('Cập nhật thiết bị thành công!');
@@ -344,7 +351,8 @@ const AssetInstanceManagement: React.FC = () => {
           salvageValue: newSalvageValue === '' ? null : Number(newSalvageValue),
           depreciationRate: newDepreciationRate === '' ? null : Number(newDepreciationRate),
           depreciationCycle: newDepreciationCycle === '' ? null : Number(newDepreciationCycle),
-          adjustmentFactor: newAdjustmentFactor === '' ? null : Number(newAdjustmentFactor)
+          adjustmentFactor: newAdjustmentFactor === '' ? null : Number(newAdjustmentFactor),
+          maintenanceCost: newMaintenanceCost === '' ? null : Number(newMaintenanceCost)
         });
         toast.showSuccess('Thêm thiết bị mới thành công!');
       }
@@ -537,6 +545,7 @@ const AssetInstanceManagement: React.FC = () => {
                       </div>
                     </th>
                     <th>Đơn giá mua</th>
+                    <th>Nâng cấp/Bảo trì</th>
                     <th style={{ textAlign: 'center' }}>Thao tác</th>
                   </tr>
                 </thead>
@@ -569,6 +578,12 @@ const AssetInstanceManagement: React.FC = () => {
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: 'var(--primary-color)' }}>
                             <DollarSign size={13} />
                             {formatPrice(ins.purchasePrice)}
+                          </span>
+                        </td>
+                        <td data-label="Nâng cấp/Bảo trì">
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: ins.maintenanceCost ? '#d97706' : 'var(--text-secondary)' }}>
+                            <Wrench size={13} />
+                            {ins.maintenanceCost ? formatPrice(ins.maintenanceCost) : '-'}
                           </span>
                         </td>
                         <td data-label="Thao tác" style={{ textAlign: 'center' }}>
@@ -675,9 +690,9 @@ const AssetInstanceManagement: React.FC = () => {
       </div>
 
       {/* Allocation History Modal */}
-      {isHistoryOpen && selectedInstance && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '800px', width: '100%' }}>
+      {isHistoryOpen && selectedInstance && createPortal(
+        <div className="modal-overlay" onClick={() => setIsHistoryOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '800px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <History size={20} style={{ color: 'var(--primary-color)' }} />
@@ -746,13 +761,14 @@ const AssetInstanceManagement: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Device Details Modal */}
-      {isDetailOpen && (
-        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }}>
-          <div className="modal-card" style={{ maxWidth: '800px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', border: '1px solid var(--border-color)', maxHeight: '90vh', overflowY: 'auto' }}>
+      {isDetailOpen && createPortal(
+        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }} onClick={() => setIsDetailOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '800px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', border: '1px solid var(--border-color)', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <HardDrive size={20} style={{ color: 'var(--primary-color)' }} />
@@ -847,6 +863,10 @@ const AssetInstanceManagement: React.FC = () => {
                           <span style={{ color: 'var(--text-secondary)' }}>Giá trị ban đầu:</span>
                           <strong>{selectedAssetDetail.purchasePrice ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedAssetDetail.purchasePrice) : '-'}</strong>
                         </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--text-secondary)' }}>Chi phí nâng cấp/bảo trì:</span>
+                          <strong>{selectedAssetDetail.maintenanceCost ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedAssetDetail.maintenanceCost) : '-'}</strong>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -940,13 +960,14 @@ const AssetInstanceManagement: React.FC = () => {
               </div>
             ) : null}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Add / Edit Instance Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }}>
-          <div className="modal-card" style={{ maxWidth: editingInstance ? '850px' : '500px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }} onClick={() => setIsModalOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: editingInstance ? '850px' : '500px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               {editingInstance ? `Chỉnh sửa thiết bị cụ thể: Serial ${editingInstance.serial}` : 'Thêm thiết bị cụ thể mới'}
             </h2>
@@ -1026,6 +1047,19 @@ const AssetInstanceManagement: React.FC = () => {
                     </div>
 
                     <div>
+                      <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Số tiền nâng cấp/bảo trì (VND)</label>
+                      <input 
+                        type="number" 
+                        className="search-input" 
+                        style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0 }}
+                        placeholder="Ví dụ: 2000000"
+                        value={newMaintenanceCost}
+                        onChange={(e) => setNewMaintenanceCost(e.target.value === '' ? '' : Number(e.target.value))}
+                        disabled={submitting}
+                      />
+                    </div>
+
+                    <div>
                       <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Trạng thái sử dụng <span style={{ color: 'var(--error)' }}>*</span></label>
                       <select
                         className="select-filter"
@@ -1092,14 +1126,14 @@ const AssetInstanceManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '12px' }}>
                       <div>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ KH (%)</label>
+                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ KH (%)</label>
                         <input 
                           type="number" 
                           step="any"
                           className="search-input" 
-                          style={{ paddingLeft: '12px', paddingRight: '4px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0, fontSize: '12px' }}
+                          style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0 }}
                           placeholder="VD: 10"
                           value={newDepreciationRate}
                           onChange={(e) => setNewDepreciationRate(e.target.value === '' ? '' : Number(e.target.value))}
@@ -1107,11 +1141,11 @@ const AssetInstanceManagement: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Chu kỳ KH (tháng)</label>
+                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Chu kỳ KH (tháng)</label>
                         <input 
                           type="number" 
                           className="search-input" 
-                          style={{ paddingLeft: '12px', paddingRight: '4px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0, fontSize: '12px' }}
+                          style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0 }}
                           placeholder="VD: 36"
                           value={newDepreciationCycle}
                           onChange={(e) => setNewDepreciationCycle(e.target.value === '' ? '' : Number(e.target.value))}
@@ -1119,12 +1153,12 @@ const AssetInstanceManagement: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Hệ số đ.chỉnh</label>
+                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Hệ số đ.chỉnh</label>
                         <input 
                           type="number" 
                           step="any"
                           className="search-input" 
-                          style={{ paddingLeft: '12px', paddingRight: '4px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0, fontSize: '12px' }}
+                          style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0 }}
                           placeholder="VD: 1.5"
                           value={newAdjustmentFactor}
                           onChange={(e) => setNewAdjustmentFactor(e.target.value === '' ? '' : Number(e.target.value))}
@@ -1270,7 +1304,8 @@ const AssetInstanceManagement: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <ConfirmModal

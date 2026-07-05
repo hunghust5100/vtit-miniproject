@@ -3,7 +3,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  animation: fadeIn var(--transition-normal) forwards;
 }
 
 /* Page Header */

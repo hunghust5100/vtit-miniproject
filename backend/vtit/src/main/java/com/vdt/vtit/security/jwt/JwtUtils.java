@@ -68,7 +68,6 @@ public class JwtUtils {
             Claims claims = extractAllClaims(token);
             return !isTokenExpired(claims);
         } catch (JwtException | IllegalArgumentException e) {
-            // Log ra lý do cụ thể (Token hết hạn, sai chữ ký, format lỗi...) thay vì làm sập ứng dụng
             log.error("JWT validation failed: {}", e.getMessage());
         }
         return false;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -23,8 +24,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  return (
-    <div className="modal-overlay" style={{ alignItems: 'center', display: 'flex', zIndex: 1100 }}>
+  return createPortal(
+    <div 
+      className="modal-overlay" 
+      style={{ alignItems: 'center', display: 'flex', zIndex: 9999 }}
+      onClick={onCancel}
+    >
       <div 
         className="modal-card" 
         style={{ 
@@ -34,6 +39,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           border: '1px solid var(--border-color)',
           textAlign: 'center'
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Warning/Alert Icon */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
@@ -114,7 +120,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

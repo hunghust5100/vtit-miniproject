@@ -38,4 +38,6 @@ public class AssetInstanceResponse {
     private Integer depreciationCycle;
 
     private Double adjustmentFactor;
+
+    private Long maintenanceCost;
 }

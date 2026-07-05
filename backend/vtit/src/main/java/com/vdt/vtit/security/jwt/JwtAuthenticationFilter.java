@@ -2,6 +2,8 @@ package com.vdt.vtit.security.jwt;
 
 import com.vdt.vtit.auth.entity.AppUser;
 import com.vdt.vtit.auth.service.AppUserService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        final String username;
+        String username;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -38,9 +40,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        username = jwtUtils.getUsernameFromToken(jwt);
 
         try {
+            username = jwtUtils.getUsernameFromToken(jwt);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 AppUser appUser = this.appUserService.loadUserByUsername(username);
 
@@ -52,10 +54,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-
+            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            logger.error("JWT token has expired: {}", e);
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "Token đã hết hạn sử dụng.");
+        } catch (JwtException e) {
+            logger.error("JWT validation failed: {}", e);
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN", "Token không hợp lệ hoặc sai chữ ký.");
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e);
+            sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_ERROR", "Lỗi xác thực hệ thống.");
         }
-        filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, int status, String errorCode, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String jsonResponse = String.format("{\"code\": \"%s\", \"message\": \"%s\"}", errorCode, message);
+        response.getWriter().write(jsonResponse);
     }
 }

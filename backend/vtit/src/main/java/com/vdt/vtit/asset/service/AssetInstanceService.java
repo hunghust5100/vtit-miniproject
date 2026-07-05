@@ -4,6 +4,7 @@ package com.vdt.vtit.asset.service;
 import com.vdt.vtit.asset.dto.AssetInstanceCreateRequest;
 import com.vdt.vtit.asset.dto.AssetInstanceResponse;
 import com.vdt.vtit.asset.dto.AssetInstanceUpdateRequest;
+import com.vdt.vtit.asset.dto.UnusedAssetsReportResponse;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -21,4 +22,6 @@ public interface AssetInstanceService {
     AssetInstanceResponse updateAssetInstanceById(Long id, AssetInstanceUpdateRequest request);
 
     void deleteAssetInstanceById(Long id);
+
+    UnusedAssetsReportResponse getUnusedAssetsReport();
 }

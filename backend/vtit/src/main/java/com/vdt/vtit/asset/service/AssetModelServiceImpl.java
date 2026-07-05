@@ -134,6 +134,7 @@ public class AssetModelServiceImpl implements AssetModelService{
                 .depreciationMethod(assetInstance.getDepreciationMethod())
                 .netBookValue(assetInstance.getNetBookValue())
                 .salvageValue(assetInstance.getSalvageValue())
+                .maintenanceCost(assetInstance.getMaintenanceCost())
                 .build();
     }
 

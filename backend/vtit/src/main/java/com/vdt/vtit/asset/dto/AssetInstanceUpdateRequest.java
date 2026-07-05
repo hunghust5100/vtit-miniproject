@@ -31,4 +31,6 @@ public class AssetInstanceUpdateRequest {
 
     private Double adjustmentFactor;
 
+    private Long maintenanceCost;
+
 }
