@@ -586,7 +586,7 @@ const AssetModelManagement: React.FC = () => {
       {/* Add / Edit Model Modal */}
       {isModalOpen && createPortal(
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-card" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card" style={{ maxHeight: '90vh', overflowY: 'auto', maxWidth: '650px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               {editingModel ? 'Chỉnh sửa dòng máy (Model)' : 'Thêm dòng máy (Model) mới'}
             </h2>
@@ -673,19 +673,21 @@ const AssetModelManagement: React.FC = () => {
                 </select>
               </div>
 
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ khấu hao (%)</label>
-                <input 
-                  type="number" 
-                  step="any"
-                  className="search-input" 
-                  style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)' }}
-                  placeholder="Ví dụ: 10"
-                  value={newDepreciationRate}
-                  onChange={(e) => setNewDepreciationRate(e.target.value === '' ? '' : Number(e.target.value))}
-                  disabled={submitting}
-                />
-              </div>
+              {newDepreciationMethod === 'DECLINING_BALANCE' && (
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ khấu hao (%)</label>
+                  <input 
+                    type="number" 
+                    step="any"
+                    className="search-input" 
+                    style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)' }}
+                    placeholder="Ví dụ: 10"
+                    value={newDepreciationRate}
+                    onChange={(e) => setNewDepreciationRate(e.target.value === '' ? '' : Number(e.target.value))}
+                    disabled={submitting}
+                  />
+                </div>
+              )}
 
               <div>
                 <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Chu kỳ khấu hao (tháng)</label>

@@ -896,7 +896,7 @@ const AssetInstanceManagement: React.FC = () => {
                           <span style={{ color: 'var(--text-secondary)' }}>Giá trị thu hồi:</span>
                           <span>{selectedAssetDetail.salvageValue ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedAssetDetail.salvageValue) : '-'}</span>
                         </div>
-                        {selectedAssetDetail.depreciationRate !== null && selectedAssetDetail.depreciationRate !== undefined && (
+                        {selectedAssetDetail.depreciationMethod === 'DECLINING_BALANCE' && selectedAssetDetail.depreciationRate !== null && selectedAssetDetail.depreciationRate !== undefined && (
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Tỷ lệ khấu hao:</span>
                             <span>{selectedAssetDetail.depreciationRate}% / tháng</span>
@@ -908,7 +908,7 @@ const AssetInstanceManagement: React.FC = () => {
                             <span>{selectedAssetDetail.depreciationCycle} tháng</span>
                           </div>
                         )}
-                        {selectedAssetDetail.adjustmentFactor !== null && selectedAssetDetail.adjustmentFactor !== undefined && (
+                        {selectedAssetDetail.depreciationMethod === 'DECLINING_BALANCE' && selectedAssetDetail.adjustmentFactor !== null && selectedAssetDetail.adjustmentFactor !== undefined && (
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Hệ số điều chỉnh:</span>
                             <span>{selectedAssetDetail.adjustmentFactor}</span>
@@ -967,7 +967,7 @@ const AssetInstanceManagement: React.FC = () => {
       {/* Add / Edit Instance Modal */}
       {isModalOpen && createPortal(
         <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }} onClick={() => setIsModalOpen(false)}>
-          <div className="modal-card" style={{ maxWidth: editingInstance ? '850px' : '500px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card" style={{ maxWidth: editingInstance ? '850px' : '580px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>
               {editingInstance ? `Chỉnh sửa thiết bị cụ thể: Serial ${editingInstance.serial}` : 'Thêm thiết bị cụ thể mới'}
             </h2>
@@ -1126,20 +1126,22 @@ const AssetInstanceManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '12px' }}>
-                      <div>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ KH (%)</label>
-                        <input 
-                          type="number" 
-                          step="any"
-                          className="search-input" 
-                          style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0 }}
-                          placeholder="VD: 10"
-                          value={newDepreciationRate}
-                          onChange={(e) => setNewDepreciationRate(e.target.value === '' ? '' : Number(e.target.value))}
-                          disabled={submitting}
-                        />
-                      </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: newDepreciationMethod === 'DECLINING_BALANCE' ? '1fr 1fr' : '1fr', gap: '12px' }}>
+                      {newDepreciationMethod === 'DECLINING_BALANCE' && (
+                        <div>
+                          <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tỷ lệ KH (%)</label>
+                          <input 
+                            type="number" 
+                            step="any"
+                            className="search-input" 
+                            style={{ paddingLeft: '16px', backgroundColor: '#fff', borderColor: 'var(--border-color)', margin: 0 }}
+                            placeholder="VD: 10"
+                            value={newDepreciationRate}
+                            onChange={(e) => setNewDepreciationRate(e.target.value === '' ? '' : Number(e.target.value))}
+                            disabled={submitting}
+                          />
+                        </div>
+                      )}
                       <div>
                         <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Chu kỳ KH (tháng)</label>
                         <input 

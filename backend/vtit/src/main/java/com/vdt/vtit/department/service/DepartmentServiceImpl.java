@@ -117,7 +117,23 @@ public class DepartmentServiceImpl implements DepartmentService{
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy phòng ban"));
 
-        departmentRepository.deleteById(id);
+        // Chuyển Trưởng phòng thành nhân viên thường (USER)
+        if (department.getHeadManagerId() != null) {
+            userRepository.findById(department.getHeadManagerId()).ifPresent(manager -> {
+                manager.setRole("USER");
+                userRepository.save(manager);
+            });
+        }
+
+        // Hủy liên kết phòng ban cho tất cả nhân viên thuộc phòng ban này
+        if (department.getStaffs() != null) {
+            for (User staff : department.getStaffs()) {
+                staff.setDepartment(null);
+                userRepository.save(staff);
+            }
+        }
+
+        departmentRepository.delete(department);
     }
 
     @Override

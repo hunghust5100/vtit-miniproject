@@ -125,7 +125,54 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
         assetInstanceRepository.delete(assetInstance);
     }
 
+    private Long calculateCurrentNetBookValue(AssetInstance instance) {
+        if (instance.getPurchasePrice() == null) {
+            return 0L;
+        }
+
+        LocalDate purchaseDate = instance.getPurchaseDate() != null ? instance.getPurchaseDate() : LocalDate.now();
+        Long purchasePrice = instance.getPurchasePrice();
+        String method = instance.getDepreciationMethod() != null ? instance.getDepreciationMethod() : "STRAIGHT_LINE";
+        Integer cycle = instance.getDepreciationCycle() != null ? instance.getDepreciationCycle() : 12;
+        if (cycle <= 0) cycle = 12;
+        Double rate = instance.getDepreciationRate() != null ? instance.getDepreciationRate() : 0.0;
+
+        Long salvageValue = instance.getSalvageValue() != null ? instance.getSalvageValue() : 0L;
+        if ("LICENSE_KEY".equalsIgnoreCase(method)) {
+            salvageValue = 0L;
+        }
+
+        LocalDate targetDate = LocalDate.now();
+        int monthsElapsed = 0;
+        if (targetDate.isAfter(purchaseDate)) {
+            monthsElapsed = (int) java.time.temporal.ChronoUnit.MONTHS.between(
+                    purchaseDate.withDayOfMonth(1),
+                    targetDate.withDayOfMonth(1)
+            );
+            if (monthsElapsed < 0) {
+                monthsElapsed = 0;
+            }
+        }
+
+        if (monthsElapsed <= 0) return purchasePrice;
+        if (monthsElapsed >= cycle) return salvageValue;
+
+        if ("DECLINING_BALANCE".equalsIgnoreCase(method)) {
+            double r = rate / 100.0;
+            double factor = Math.pow(1.0 - r, monthsElapsed);
+            long val = Math.round(purchasePrice * factor);
+            return Math.max(salvageValue, val);
+        } else {
+            // STRAIGHT_LINE or LICENSE_KEY
+            double D = (double) purchasePrice / cycle;
+            long val = Math.round(purchasePrice - monthsElapsed * D);
+            return Math.max(salvageValue, val);
+        }
+    }
+
     private AssetInstanceResponse mapToAssetInstanceResponse(AssetInstance assetInstance) {
+        Long dynamicNetBookValue = calculateCurrentNetBookValue(assetInstance);
+
         return AssetInstanceResponse.builder()
                 .id(assetInstance.getId())
                 .assetModelId(assetInstance.getAssetModel().getId())
@@ -137,7 +184,7 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .purchaseDate(assetInstance.getPurchaseDate())
                 .purchasePrice(assetInstance.getPurchasePrice())
                 .depreciationMethod(assetInstance.getDepreciationMethod())
-                .netBookValue(assetInstance.getNetBookValue())
+                .netBookValue(dynamicNetBookValue)
                 .salvageValue(assetInstance.getSalvageValue())
                 .depreciationRate(assetInstance.getDepreciationRate())
                 .depreciationCycle(assetInstance.getDepreciationCycle())
@@ -159,7 +206,8 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
 
         List<AssetInstanceResponse> responseList = new ArrayList<>();
         for (AssetInstance asset : unusedAssets) {
-            long netVal = asset.getNetBookValue() != null ? asset.getNetBookValue() : (asset.getPurchasePrice() != null ? asset.getPurchasePrice() : 0L);
+            Long dynamicNetBookValue = calculateCurrentNetBookValue(asset);
+            long netVal = dynamicNetBookValue != null ? dynamicNetBookValue : 0L;
             long price = asset.getPurchasePrice() != null ? asset.getPurchasePrice() : 0L;
             totalNetBookValue += netVal;
             totalPurchasePrice += price;

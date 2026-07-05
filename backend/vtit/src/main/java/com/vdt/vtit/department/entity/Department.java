@@ -33,7 +33,6 @@ public class Department {
 
     @OneToMany(
             mappedBy = "department",
-            cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
     @Builder.Default

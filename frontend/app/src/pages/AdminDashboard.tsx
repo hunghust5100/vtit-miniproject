@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { FolderTree, Cpu, HardDrive, RefreshCw, AlertTriangle, Wrench, TrendingUp } from 'lucide-react';
 import './Dashboard.css';
+import './admin/ManagementTable.css';
 
 interface DepreciationAlert {
   assetInstanceId: number;
@@ -578,8 +579,8 @@ const AdminDashboard: React.FC = () => {
             Không có thiết bị nào cần chú ý.
           </div>
         ) : (
-          <div className="table-wrapper" style={{ border: '1px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden' }}>
-            <table className="management-table">
+          <div className="table-container">
+            <table className="dashboard-table">
               <thead>
                 <tr>
                   <th>Mã Serial</th>
