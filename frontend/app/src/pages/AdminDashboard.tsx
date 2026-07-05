@@ -565,8 +565,8 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Alert Details Section */}
-      <div style={{ marginTop: '12px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="dashboard-content-section" style={{ marginTop: '12px' }}>
+        <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           Danh sách thiết bị cần chú ý
         </h2>
         
@@ -579,7 +579,7 @@ const AdminDashboard: React.FC = () => {
             Không có thiết bị nào cần chú ý.
           </div>
         ) : (
-          <div className="table-container">
+          <div className="dashboard-table-wrapper">
             <table className="dashboard-table">
               <thead>
                 <tr>

@@ -273,17 +273,17 @@
     padding-bottom: 8px;
   }
 
-  /* Convert table to card layout on mobile */
-  .dashboard-table,
-  .dashboard-table thead,
-  .dashboard-table tbody,
-  .dashboard-table th,
-  .dashboard-table td,
-  .dashboard-table tr {
+  /* Convert table to card layout on mobile - scoped to dashboard sections */
+  .dashboard-content-section .dashboard-table,
+  .dashboard-content-section .dashboard-table thead,
+  .dashboard-content-section .dashboard-table tbody,
+  .dashboard-content-section .dashboard-table th,
+  .dashboard-content-section .dashboard-table td,
+  .dashboard-content-section .dashboard-table tr {
     display: block;
   }
 
-  .dashboard-table thead {
+  .dashboard-content-section .dashboard-table thead {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -295,7 +295,7 @@
     border: 0;
   }
 
-  .dashboard-table tr {
+  .dashboard-content-section .dashboard-table tr {
     background-color: #fff;
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -307,11 +307,11 @@
     gap: 6px;
   }
 
-  .dashboard-table tr:hover td {
+  .dashboard-content-section .dashboard-table tr:hover td {
     background-color: transparent;
   }
 
-  .dashboard-table td {
+  .dashboard-content-section .dashboard-table td {
     padding: 4px 0;
     border-bottom: none;
     font-size: 13px;
@@ -322,7 +322,7 @@
     text-align: right;
   }
 
-  .dashboard-table td::before {
+  .dashboard-content-section .dashboard-table td::before {
     content: attr(data-label);
     font-weight: 600;
     color: var(--text-secondary);
@@ -332,7 +332,7 @@
     min-width: 0;
   }
 
-  .dashboard-table tr:last-child td {
+  .dashboard-content-section .dashboard-table tr:last-child td {
     border-bottom: none;
   }
 
