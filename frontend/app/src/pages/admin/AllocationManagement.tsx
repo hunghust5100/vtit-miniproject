@@ -324,7 +324,7 @@ const AllocationManagement: React.FC = () => {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="dashboard-table-wrapper">
               <table className="dashboard-table">
                 <thead>
                   <tr>
@@ -340,9 +340,9 @@ const AllocationManagement: React.FC = () => {
                 <tbody>
                   {filteredAllocations.map((a) => (
                     <tr key={a.id}>
-                      <td data-label="Mã số" style={{ fontFamily: 'monospace', fontWeight: 600 }}>#{a.id}</td>
-                      <td data-label="Nhân viên đăng ký">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                      <td data-label="Mã số" className="text-nowrap" style={{ fontFamily: 'monospace', fontWeight: 600 }}>#{a.id}</td>
+                      <td data-label="Nhân viên đăng ký" className="text-nowrap">
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
                           <User size={14} style={{ color: 'var(--text-secondary)' }} />
                           {a.staffName}
                         </div>
@@ -353,11 +353,11 @@ const AllocationManagement: React.FC = () => {
                           {a.assetModelName}
                         </div>
                       </td>
-                      <td data-label="Ngày yêu cầu" style={{ fontSize: '13px' }}>
+                      <td data-label="Ngày yêu cầu" className="text-nowrap" style={{ fontSize: '13px' }}>
                         {new Date(a.requestAt).toLocaleString('vi-VN')}
                       </td>
-                      <td data-label="Trạng thái">{getStatusBadge(a.status, a.requestAt)}</td>
-                      <td data-label="Ngày bàn giao" style={{ fontSize: '13px' }}>
+                      <td data-label="Trạng thái" className="text-nowrap">{getStatusBadge(a.status, a.requestAt)}</td>
+                      <td data-label="Ngày bàn giao" className="text-nowrap" style={{ fontSize: '13px' }}>
                         {a.receivedAt ? (
                           <span style={{ color: 'var(--success)', fontWeight: 500 }}>
                             {new Date(a.receivedAt).toLocaleString('vi-VN')}
@@ -366,7 +366,7 @@ const AllocationManagement: React.FC = () => {
                           <span style={{ color: 'var(--text-muted)' }}>Chưa nhận</span>
                         )}
                       </td>
-                      <td data-label="Thao tác xử lý" style={{ textAlign: 'center' }}>
+                      <td data-label="Thao tác xử lý" className="text-nowrap" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           {/* PENDING Actions: Approve / Reject */}
                           {a.status === 'PENDING' && (new Date(a.requestAt).getTime() + 24 * 60 * 60 * 1000 > currentTime) && (

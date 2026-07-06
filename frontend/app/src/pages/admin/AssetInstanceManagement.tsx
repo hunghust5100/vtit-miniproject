@@ -514,7 +514,7 @@ const AssetInstanceManagement: React.FC = () => {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="dashboard-table-wrapper">
               <table className="dashboard-table">
                 <thead>
                   <tr>
@@ -554,39 +554,38 @@ const AssetInstanceManagement: React.FC = () => {
                     const statusDetail = getStatusDetails(ins.status);
                     return (
                       <tr key={ins.id}>
-                        <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{ins.id}</td>
-                        <td data-label="Số Serial">
-                          <div style={{ fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-primary)' }} className="header-sort-content">
+                        <td data-label="Mã số" className="text-nowrap" style={{ fontFamily: 'monospace' }}>#{ins.id}</td>
+                        <td data-label="Số Serial" className="text-nowrap">
+                          <div style={{ fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-primary)', display: 'inline-flex' }} className="header-sort-content">
                             <HardDrive size={14} style={{ color: 'var(--primary-color)' }} />
                             {ins.serial}
                           </div>
                         </td>
                         <td data-label="Dòng máy (Model)" style={{ fontWeight: 600 }}>{ins.assetModelName}</td>
-                        <td data-label="Loại thiết bị">{ins.assetTypeName}</td>
-                        <td data-label="Trạng thái">
+                        <td data-label="Loại thiết bị" className="text-nowrap">{ins.assetTypeName}</td>
+                        <td data-label="Trạng thái" className="text-nowrap">
                           <span className={`status-badge ${statusDetail.css}`}>
                             {statusDetail.label}
                           </span>
                         </td>
-                        <td data-label="Ngày mua">
+                        <td data-label="Ngày mua" className="text-nowrap">
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                             <Calendar size={13} style={{ color: 'var(--text-secondary)' }} />
                             {ins.purchaseDate ? new Date(ins.purchaseDate).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
                           </span>
                         </td>
-                        <td data-label="Đơn giá mua">
+                        <td data-label="Đơn giá mua" className="text-nowrap">
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: 'var(--primary-color)' }}>
-                            <DollarSign size={13} />
                             {formatPrice(ins.purchasePrice)}
                           </span>
                         </td>
-                        <td data-label="Nâng cấp/Bảo trì">
+                        <td data-label="Nâng cấp/Bảo trì" className="text-nowrap">
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: ins.maintenanceCost ? '#d97706' : 'var(--text-secondary)' }}>
                             <Wrench size={13} />
                             {ins.maintenanceCost ? formatPrice(ins.maintenanceCost) : '-'}
                           </span>
                         </td>
-                        <td data-label="Thao tác" style={{ textAlign: 'center' }}>
+                        <td data-label="Thao tác" className="text-nowrap" style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             <button
                               type="button"

@@ -307,7 +307,7 @@ const UserAllocationHistory: React.FC = () => {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="dashboard-table-wrapper">
               <table className="dashboard-table">
                 <thead>
                   <tr>

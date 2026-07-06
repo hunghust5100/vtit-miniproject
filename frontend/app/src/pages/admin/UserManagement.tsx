@@ -370,7 +370,7 @@ const UserManagement: React.FC = () => {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="dashboard-table-wrapper">
               <table className="dashboard-table">
                 <thead>
                   <tr>
@@ -404,17 +404,17 @@ const UserManagement: React.FC = () => {
                     const normalizedRole = u.role.replace(/^ROLE_/, '');
                     return (
                       <tr key={u.id}>
-                        <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{u.id}</td>
-                        <td data-label="Họ và tên" style={{ fontWeight: 600 }}>{u.fullName}</td>
-                        <td data-label="Email">{u.email}</td>
-                        <td data-label="Số điện thoại">{u.phoneNumber || '-'}</td>
-                        <td data-label="Vai trò">
+                        <td data-label="Mã số" className="text-nowrap" style={{ fontFamily: 'monospace' }}>#{u.id}</td>
+                        <td data-label="Họ và tên" className="text-nowrap" style={{ fontWeight: 600 }}>{u.fullName}</td>
+                        <td data-label="Email" className="text-break">{u.email}</td>
+                        <td data-label="Số điện thoại" className="text-nowrap">{u.phoneNumber || '-'}</td>
+                        <td data-label="Vai trò" className="text-nowrap">
                           <span className={`role-badge ${normalizedRole.toLowerCase()}`}>
                             {normalizedRole === 'ADMIN' ? 'Admin' : normalizedRole === 'MANAGER' ? 'Manager' : 'Nhân viên'}
                           </span>
                         </td>
-                        <td data-label="Ngày tạo">{new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
-                        <td data-label="Thao tác" style={{ textAlign: 'center' }}>
+                        <td data-label="Ngày tạo" className="text-nowrap">{new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
+                        <td data-label="Thao tác" className="text-nowrap" style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             <button
                               type="button"

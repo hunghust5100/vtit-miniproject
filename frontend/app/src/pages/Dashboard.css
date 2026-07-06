@@ -312,7 +312,7 @@
   }
 
   .dashboard-content-section .dashboard-table td {
-    padding: 4px 0;
+    padding: 8px 0;
     border-bottom: none;
     font-size: 13px;
     display: flex;
@@ -320,6 +320,17 @@
     align-items: center;
     gap: 8px;
     text-align: right;
+    word-break: break-word;
+  }
+
+  .dashboard-content-section .dashboard-table td > * {
+    max-width: 100%;
+  }
+
+  .dashboard-content-section .dashboard-table td > div {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   .dashboard-content-section .dashboard-table td::before {

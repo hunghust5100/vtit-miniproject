@@ -413,7 +413,7 @@ const AssetModelManagement: React.FC = () => {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="dashboard-table-wrapper">
               <table className="dashboard-table">
                 <thead>
                   <tr>
@@ -446,21 +446,21 @@ const AssetModelManagement: React.FC = () => {
                 <tbody>
                   {filteredModels.map((m) => (
                     <tr key={m.id}>
-                      <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{m.id}</td>
+                      <td data-label="Mã số" className="text-nowrap" style={{ fontFamily: 'monospace' }}>#{m.id}</td>
                       <td data-label="Tên Model">
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="header-sort-content">
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'inline-flex' }} className="header-sort-content">
                           <Cpu size={14} style={{ color: 'var(--primary-color)' }} />
                           {m.name}
                         </div>
                       </td>
-                      <td data-label="Ký hiệu (Code)">
+                      <td data-label="Ký hiệu (Code)" className="text-nowrap">
                         <span className="role-badge" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
                           {m.code}
                         </span>
                       </td>
-                      <td data-label="Hãng sản xuất" style={{ fontWeight: 500 }}>{m.manufacturer}</td>
-                      <td data-label="Loại thiết bị">{m.assetTypeName}</td>
-                      <td data-label="Thống kê thiết bị">
+                      <td data-label="Hãng sản xuất" className="text-nowrap" style={{ fontWeight: 500 }}>{m.manufacturer}</td>
+                      <td data-label="Loại thiết bị" className="text-nowrap">{m.assetTypeName}</td>
+                      <td data-label="Thống kê thiết bị" className="text-nowrap">
                         {(() => {
                           const stats = getModelStats(m.id);
                           return (
@@ -499,7 +499,7 @@ const AssetModelManagement: React.FC = () => {
                       <td data-label="Thông số kỹ thuật" style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatSpecs(m.specification)}>
                         {formatSpecs(m.specification)}
                       </td>
-                      <td data-label="Thao tác" style={{ textAlign: 'center' }}>
+                      <td data-label="Thao tác" className="text-nowrap" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
                             type="button"

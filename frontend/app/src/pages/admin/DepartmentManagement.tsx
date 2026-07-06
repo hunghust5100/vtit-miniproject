@@ -389,7 +389,7 @@ const DepartmentManagement: React.FC = () => {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="dashboard-table-wrapper">
               <table className="dashboard-table">
                 <thead>
                   <tr>
@@ -421,23 +421,23 @@ const DepartmentManagement: React.FC = () => {
                 <tbody>
                   {filteredDepartments.map((d) => (
                     <tr key={d.id}>
-                      <td data-label="Mã số" style={{ fontFamily: 'monospace' }}>#{d.id}</td>
+                      <td data-label="Mã số" className="text-nowrap" style={{ fontFamily: 'monospace' }}>#{d.id}</td>
                       <td data-label="Tên phòng ban">
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{d.name}</div>
                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{d.description || 'Chưa có mô tả'}</div>
                       </td>
-                      <td data-label="Danh mục">
+                      <td data-label="Danh mục" className="text-nowrap">
                         <span className="role-badge" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
                           {d.category}
                         </span>
                       </td>
-                      <td data-label="Vị trí">
+                      <td data-label="Vị trí" className="text-nowrap">
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                           <MapPin size={14} style={{ color: 'var(--primary-color)' }} />
                           {d.location}
                         </span>
                       </td>
-                      <td data-label="Quản lý trưởng">
+                      <td data-label="Quản lý trưởng" className="text-nowrap">
                         {d.headManagerName ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
                             <User size={14} style={{ color: 'var(--text-secondary)' }} />
@@ -447,14 +447,14 @@ const DepartmentManagement: React.FC = () => {
                           <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Chưa bổ nhiệm</span>
                         )}
                       </td>
-                      <td data-label="Nhân sự" 
+                      <td data-label="Nhân sự" className="text-nowrap"
                         style={{ fontWeight: 600, color: 'var(--primary-color)', cursor: 'pointer' }}
                         onClick={() => handleOpenStaffModal(d)}
                         title="Click để quản lý nhân sự"
                       >
                         {d.staffAmount} nhân sự
                       </td>
-                      <td data-label="Thao tác" style={{ textAlign: 'center' }}>
+                      <td data-label="Thao tác" className="text-nowrap" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
                             type="button"

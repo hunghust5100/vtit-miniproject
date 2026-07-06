@@ -144,6 +144,14 @@
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
 }
 
 /* Pagination Bar */
@@ -330,6 +338,29 @@
   gap: 12px;
 }
 
+/* Table container and desktop table style improvements */
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px; /* Slightly smaller font size on desktop for better fit */
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 10px 8px !important; /* Tighten padding to save horizontal space */
+}
+
+/* Column wrapping control utilities */
+.text-nowrap {
+  white-space: nowrap !important;
+}
+
+.text-break {
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+}
+
 @media (max-width: 768px) {
   /* Page Header */
   .page-header {
@@ -430,7 +461,7 @@
   }
 
   .table-container .dashboard-table td {
-    padding: 4px 0;
+    padding: 8px 0;
     border-bottom: none;
     font-size: 13px;
     display: flex;
@@ -438,6 +469,17 @@
     align-items: center;
     gap: 8px;
     text-align: right;
+    word-break: break-word;
+  }
+
+  .table-container .dashboard-table td > * {
+    max-width: 100%;
+  }
+
+  .table-container .dashboard-table td > div {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   .table-container .dashboard-table td::before {
