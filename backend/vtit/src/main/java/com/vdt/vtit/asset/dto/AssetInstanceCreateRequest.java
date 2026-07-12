@@ -29,4 +29,6 @@ public class AssetInstanceCreateRequest {
 
     private Long maintenanceCost;
 
+    private Long warehouseId;
+
 }

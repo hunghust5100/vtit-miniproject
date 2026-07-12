@@ -13,9 +13,10 @@ import {
   FileCheck,
   ClipboardList,
   User,
-  History
+  History,
+  Warehouse
 } from 'lucide-react';
-import viettelLogo from '../../assets/viettel_logo.png';
+import viettelLogo from '../../assets/logo-viettel.png';
 import './MainLayout.css';
 import ChatbotWidget from '../chatbot/ChatbotWidget';
 
@@ -85,7 +86,8 @@ const MainLayout: React.FC = () => {
         { path: '/admin/asset-types', label: 'Quản lý Loại thiết bị', icon: <Layers size={20} /> },
         { path: '/admin/asset-models', label: 'Quản lý Model thiết bị', icon: <Cpu size={20} /> },
         { path: '/admin/asset-instances', label: 'Quản lý Thiết bị', icon: <HardDrive size={20} /> },
-        { path: '/admin/allocations', label: 'Quản lý Cấp phát', icon: <FileCheck size={20} /> }
+        { path: '/admin/allocations', label: 'Quản lý Cấp phát', icon: <FileCheck size={20} /> },
+        { path: '/admin/warehouses', label: 'Quản lý Kho hàng', icon: <Warehouse size={20} /> }
       );
     } else if (role === 'MANAGER') {
       items.push(
@@ -177,6 +179,7 @@ const MainLayout: React.FC = () => {
                   <Link 
                     to={item.path} 
                     className={`menu-link ${isActive ? 'active' : ''}`}
+                    data-tooltip={item.label}
                   >
                     <span className="menu-icon">{item.icon}</span>
                     <span className="menu-text">{item.label}</span>

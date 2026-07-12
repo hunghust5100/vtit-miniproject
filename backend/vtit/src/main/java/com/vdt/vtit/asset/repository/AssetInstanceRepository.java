@@ -29,4 +29,6 @@ public interface AssetInstanceRepository extends JpaRepository<AssetInstance, Lo
            "))")
     List<AssetInstance> findUnusedAssets(@Param("threeMonthsAgo") LocalDate threeMonthsAgo,
                                          @Param("threeMonthsAgoDateTime") LocalDateTime threeMonthsAgoDateTime);
+
+    java.util.Optional<AssetInstance> findBySerial(String serial);
 }

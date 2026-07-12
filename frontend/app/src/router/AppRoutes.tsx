@@ -13,8 +13,10 @@ import AssetModelManagement from '../pages/admin/AssetModelManagement';
 import AssetInstanceManagement from '../pages/admin/AssetInstanceManagement';
 import UserRequests from '../pages/UserRequests';
 import AllocationManagement from '../pages/admin/AllocationManagement';
+import WarehouseManagement from '../pages/admin/WarehouseManagement';
 import UserProfile from '../pages/UserProfile';
 import UserAllocationHistory from '../pages/UserAllocationHistory';
+import QrScanResult from '../pages/QrScanResult';
 
 // Helper to check if a user is authenticated
 const useRequireAuth = () => {
@@ -102,6 +104,8 @@ const AppRoutes: React.FC = () => {
           }
         />
 
+        <Route path="/qr-scan/:serial" element={<QrScanResult />} />
+
         {/* Protected Routes inside MainLayout */}
         <Route
           path="/"
@@ -168,6 +172,14 @@ const AppRoutes: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AllocationManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/warehouses"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <WarehouseManagement />
               </ProtectedRoute>
             }
           />

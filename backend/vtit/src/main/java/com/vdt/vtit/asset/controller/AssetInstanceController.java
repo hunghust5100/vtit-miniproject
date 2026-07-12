@@ -59,4 +59,9 @@ public class AssetInstanceController {
     public ResponseEntity<UnusedAssetsReportResponse> getUnusedAssetsReport() {
         return ResponseEntity.ok(assetInstanceService.getUnusedAssetsReport());
     }
+
+    @GetMapping("/by-serial/{serial}")
+    public ResponseEntity<AssetInstanceResponse> getAssetInstanceBySerial(@PathVariable String serial) {
+        return ResponseEntity.ok(assetInstanceService.getAssetInstanceBySerial(serial));
+    }
 }

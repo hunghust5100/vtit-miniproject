@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import api from '../../services/api';
 import { 
   Search, 
@@ -13,14 +14,15 @@ import {
   ChevronsRight,
   HardDrive,
   Calendar,
-  DollarSign,
   Trash2,
   Pencil,
   History,
   Clock,
   User,
   Eye,
-  Wrench
+  Wrench,
+  QrCode,
+  Warehouse
 } from 'lucide-react';
 import './ManagementTable.css';
 import { useToast } from '../../context/ToastContext';
@@ -40,6 +42,8 @@ interface AssetInstanceResponse {
   salvageValue?: number;
   specification?: Record<string, any>;
   maintenanceCost?: number;
+  warehouseId?: number | null;
+  warehouseName?: string | null;
 }
 
 interface AssetModelOption {
@@ -63,6 +67,7 @@ interface AllocationItem {
 
 const AssetInstanceManagement: React.FC = () => {
   const toast = useToast();
+  const appBaseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
   // Server-side State
   const [instances, setInstances] = useState<AssetInstanceResponse[]>([]);
   const [models, setModels] = useState<AssetModelOption[]>([]);
@@ -99,6 +104,8 @@ const AssetInstanceManagement: React.FC = () => {
   const [newDepreciationCycle, setNewDepreciationCycle] = useState<number | ''>('');
   const [newAdjustmentFactor, setNewAdjustmentFactor] = useState<number | ''>('');
   const [newSpecifications, setNewSpecifications] = useState<{ key: string; value: string }[]>([]);
+  const [warehouses, setWarehouses] = useState<{ id: number; name: string }[]>([]);
+  const [newWarehouseId, setNewWarehouseId] = useState<number | ''>('');
   
   const [modalError, setModalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -115,6 +122,98 @@ const AssetInstanceManagement: React.FC = () => {
   const [selectedModelDetail, setSelectedModelDetail] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+
+  // QR Code Modal State
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [qrInstance, setQrInstance] = useState<AssetInstanceResponse | null>(null);
+
+  const handleOpenQrModal = (ins: AssetInstanceResponse) => {
+    setQrInstance(ins);
+    setIsQrModalOpen(true);
+  };
+
+  const downloadQrCode = () => {
+    if (!qrInstance) return;
+    const svgElement = document.getElementById(`qr-${qrInstance.serial}`);
+    if (!svgElement) return;
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const URL = window.URL || window.webkitURL || window;
+    const blobURL = URL.createObjectURL(svgBlob);
+    
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 250;
+      canvas.height = 250;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.fillStyle = '#FFFFFF';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 25, 25, 200, 200);
+        
+        const pngURL = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngURL;
+        downloadLink.download = `qrcode_${qrInstance.serial}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      }
+    };
+    image.src = blobURL;
+  };
+
+  const printQrCode = () => {
+    if (!qrInstance) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const svgElement = document.getElementById(`qr-${qrInstance.serial}`);
+    if (!svgElement) return;
+    const svgString = svgElement.outerHTML;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>In mã QR - ${qrInstance.serial}</title>
+          <style>
+            body {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              margin: 0;
+              font-family: Arial, sans-serif;
+            }
+            .container {
+              text-align: center;
+              border: 2px dashed #ccc;
+              padding: 20px;
+              border-radius: 8px;
+            }
+            h2 { margin-bottom: 5px; }
+            p { color: #666; margin-top: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>VTIT ASSET QR</h2>
+            ${svgString}
+            <p>Model: ${qrInstance.assetModelName}</p>
+            <p>Serial: ${qrInstance.serial}</p>
+          </div>
+          <script>
+            setTimeout(function() {
+              window.print();
+              window.close();
+            }, 300);
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   // Confirm Modal State
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -133,20 +232,43 @@ const AssetInstanceManagement: React.FC = () => {
   const fetchInstances = async () => {
     setLoading(true);
     setError(null);
+    const params = new URLSearchParams(window.location.search);
+    const searchParam = params.get('search');
+
     try {
-      const response = await api.get('/api/v1/assets/instance', {
-        params: {
-          page,
-          size,
-          sortBy,
-          sortDir
+      if (searchParam) {
+        try {
+          const response = await api.get(`/api/v1/assets/instance/by-serial/${searchParam}`);
+          if (response.data) {
+            setInstances([response.data]);
+            setTotalPages(1);
+            setTotalElements(1);
+          } else {
+            setInstances([]);
+            setTotalPages(0);
+            setTotalElements(0);
+          }
+        } catch (searchErr) {
+          // Fallback to empty list instead of global error page if serial is not found
+          setInstances([]);
+          setTotalPages(0);
+          setTotalElements(0);
         }
-      });
-      const data = response.data;
-      if (data) {
-        setInstances(data.content || []);
-        setTotalPages(data.totalPages || 0);
-        setTotalElements(data.totalElements || 0);
+      } else {
+        const response = await api.get('/api/v1/assets/instance', {
+          params: {
+            page,
+            size,
+            sortBy,
+            sortDir
+          }
+        });
+        const data = response.data;
+        if (data) {
+          setInstances(data.content || []);
+          setTotalPages(data.totalPages || 0);
+          setTotalElements(data.totalElements || 0);
+        }
       }
     } catch (err: any) {
       console.error('Fetch asset instances failed', err);
@@ -170,12 +292,32 @@ const AssetInstanceManagement: React.FC = () => {
     }
   };
 
+  // Fetch Warehouse options for dropdown
+  const fetchWarehouseOptions = async () => {
+    try {
+      const response = await api.get('/api/v1/warehouses');
+      if (response.data) {
+        setWarehouses(response.data.map((w: any) => ({ id: w.id, name: w.name })));
+      }
+    } catch (err) {
+      console.error('Failed to fetch warehouse options', err);
+    }
+  };
+
   useEffect(() => {
     fetchInstances();
   }, [page, size, sortBy, sortDir]);
 
   useEffect(() => {
     fetchModelOptions();
+    fetchWarehouseOptions();
+    
+    // Parse initial search parameter from URL
+    const params = new URLSearchParams(window.location.search);
+    const searchParam = params.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
   }, []);
 
   // Handle Sort
@@ -264,6 +406,7 @@ const AssetInstanceManagement: React.FC = () => {
     setNewDepreciationCycle('');
     setNewAdjustmentFactor('');
     setNewSpecifications([]);
+    setNewWarehouseId('');
     setModalError(null);
     setIsModalOpen(true);
   };
@@ -285,6 +428,7 @@ const AssetInstanceManagement: React.FC = () => {
     setNewDepreciationRate(ins.depreciationRate !== null && ins.depreciationRate !== undefined ? ins.depreciationRate : '');
     setNewDepreciationCycle(ins.depreciationCycle !== null && ins.depreciationCycle !== undefined ? ins.depreciationCycle : '');
     setNewAdjustmentFactor(ins.adjustmentFactor !== null && ins.adjustmentFactor !== undefined ? ins.adjustmentFactor : '');
+    setNewWarehouseId(ins.warehouseId !== null && ins.warehouseId !== undefined ? ins.warehouseId : '');
     
     // Bind specifications
     if (ins.specification) {
@@ -336,6 +480,7 @@ const AssetInstanceManagement: React.FC = () => {
           depreciationCycle: newDepreciationCycle === '' ? null : Number(newDepreciationCycle),
           adjustmentFactor: newAdjustmentFactor === '' ? null : Number(newAdjustmentFactor),
           maintenanceCost: newMaintenanceCost === '' ? null : Number(newMaintenanceCost),
+          warehouseId: newWarehouseId === '' ? null : Number(newWarehouseId),
           specification: specObject
         });
         toast.showSuccess('Cập nhật thiết bị thành công!');
@@ -352,7 +497,8 @@ const AssetInstanceManagement: React.FC = () => {
           depreciationRate: newDepreciationRate === '' ? null : Number(newDepreciationRate),
           depreciationCycle: newDepreciationCycle === '' ? null : Number(newDepreciationCycle),
           adjustmentFactor: newAdjustmentFactor === '' ? null : Number(newAdjustmentFactor),
-          maintenanceCost: newMaintenanceCost === '' ? null : Number(newMaintenanceCost)
+          maintenanceCost: newMaintenanceCost === '' ? null : Number(newMaintenanceCost),
+          warehouseId: newWarehouseId === '' ? null : Number(newWarehouseId)
         });
         toast.showSuccess('Thêm thiết bị mới thành công!');
       }
@@ -477,7 +623,17 @@ const AssetInstanceManagement: React.FC = () => {
               className="search-input"
               placeholder="Tìm theo Serial, Model..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                if (!val) {
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete('search');
+                  window.history.replaceState({}, '', url.pathname + url.search);
+                  setPage(0);
+                  fetchInstances();
+                }
+              }}
             />
           </div>
 
@@ -534,6 +690,7 @@ const AssetInstanceManagement: React.FC = () => {
                       </div>
                     </th>
                     <th>Loại thiết bị</th>
+                    <th>Kho chứa</th>
                     <th className="sortable-header" onClick={() => handleSort('status')}>
                       <div className="header-sort-content">
                         Trạng thái {renderSortIndicator('status')}
@@ -563,6 +720,16 @@ const AssetInstanceManagement: React.FC = () => {
                         </td>
                         <td data-label="Dòng máy (Model)" style={{ fontWeight: 600 }}>{ins.assetModelName}</td>
                         <td data-label="Loại thiết bị" className="text-nowrap">{ins.assetTypeName}</td>
+                        <td data-label="Kho chứa" className="text-nowrap">
+                          {ins.warehouseName ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                              <Warehouse size={13} style={{ color: 'var(--text-secondary)' }} />
+                              {ins.warehouseName}
+                            </span>
+                          ) : (
+                            <span className="text-muted" style={{ fontStyle: 'italic' }}>Chưa gán kho</span>
+                          )}
+                        </td>
                         <td data-label="Trạng thái" className="text-nowrap">
                           <span className={`status-badge ${statusDetail.css}`}>
                             {statusDetail.label}
@@ -604,6 +771,15 @@ const AssetInstanceManagement: React.FC = () => {
                               title="Xem lịch sử cấp phát"
                             >
                               <History size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline-sm"
+                              style={{ color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.2)', padding: '5px 8px' }}
+                              onClick={() => handleOpenQrModal(ins)}
+                              title="Sinh mã QR"
+                            >
+                              <QrCode size={14} />
                             </button>
                             <button
                               type="button"
@@ -868,6 +1044,18 @@ const AssetInstanceManagement: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* QR Code Section */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', marginTop: '8px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-secondary)' }}>MÃ QR THIẾT BỊ</div>
+                      <QRCodeSVG
+                        id={`qr-admin-detail-${selectedAssetDetail.serial}`}
+                        value={`${appBaseUrl}/qr-scan/${selectedAssetDetail.serial}`}
+                        size={120}
+                        includeMargin={true}
+                      />
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Quét để truy cập nhanh từ điện thoại</div>
+                    </div>
                   </div>
 
                   {/* Column 2: Specs & Depreciation */}
@@ -1072,6 +1260,22 @@ const AssetInstanceManagement: React.FC = () => {
                         <option value="USING">Đang sử dụng (Using)</option>
                         <option value="MAINTENANCE">Đang bảo trì (Maintenance)</option>
                         <option value="LIQUIDATED">Đã thanh lý (Liquidated)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Kho chứa (Warehouse)</label>
+                      <select
+                        className="select-filter"
+                        style={{ width: '100%', backgroundColor: '#fff', borderColor: 'var(--border-color)', borderRadius: '50px' }}
+                        value={newWarehouseId}
+                        onChange={(e) => setNewWarehouseId(e.target.value === '' ? '' : Number(e.target.value))}
+                        disabled={submitting}
+                      >
+                        <option value="">-- Chưa gán kho --</option>
+                        {warehouses.map(w => (
+                          <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -1294,6 +1498,22 @@ const AssetInstanceManagement: React.FC = () => {
                       required
                     />
                   </div>
+
+                  <div>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Kho chứa (Warehouse)</label>
+                    <select
+                      className="select-filter"
+                      style={{ width: '100%', backgroundColor: '#fff', borderColor: 'var(--border-color)', borderRadius: '50px' }}
+                      value={newWarehouseId}
+                      onChange={(e) => setNewWarehouseId(e.target.value === '' ? '' : Number(e.target.value))}
+                      disabled={submitting}
+                    >
+                      <option value="">-- Chọn Kho chứa --</option>
+                      {warehouses.map(w => (
+                        <option key={w.id} value={w.id}>{w.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
 
@@ -1320,6 +1540,56 @@ const AssetInstanceManagement: React.FC = () => {
         onCancel={() => setConfirmOpen(false)}
         isDanger={true}
       />
+
+      {/* QR Code Generator Modal */}
+      {isQrModalOpen && qrInstance && createPortal(
+        <div className="modal-overlay" onClick={() => setIsQrModalOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '420px', width: '100%', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <QrCode size={20} style={{ color: '#0284c7' }} />
+                Mã QR thiết bị
+              </h2>
+              <button type="button" className="btn-outline-sm" onClick={() => setIsQrModalOpen(false)}>Đóng</button>
+            </div>
+            
+            <div style={{ backgroundColor: '#f8fafc', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <QRCodeSVG
+                id={`qr-${qrInstance.serial}`}
+                value={`${appBaseUrl}/qr-scan/${qrInstance.serial}`}
+                size={200}
+                includeMargin={true}
+              />
+            </div>
+            
+            <div style={{ textAlign: 'left', marginBottom: '24px' }}>
+              <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>Dòng máy: <strong style={{ color: 'var(--text-primary)' }}>{qrInstance.assetModelName}</strong></p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>Loại: <strong style={{ color: 'var(--text-primary)' }}>{qrInstance.assetTypeName}</strong></p>
+              <p style={{ margin: '0', fontSize: '13px', color: 'var(--text-secondary)' }}>Số Serial: <code style={{ backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>{qrInstance.serial}</code></p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                type="button" 
+                className="btn-primary" 
+                onClick={downloadQrCode}
+                style={{ padding: '8px 16px', borderRadius: '50px', cursor: 'pointer', fontSize: '13px' }}
+              >
+                Tải ảnh PNG
+              </button>
+              <button 
+                type="button" 
+                className="btn-outline" 
+                onClick={printQrCode}
+                style={{ padding: '8px 16px', borderRadius: '50px', cursor: 'pointer', fontSize: '13px' }}
+              >
+                In mã QR
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

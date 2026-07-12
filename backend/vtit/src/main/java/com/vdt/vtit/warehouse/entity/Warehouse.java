@@ -31,7 +31,7 @@ public class Warehouse {
 
     @OneToMany(
             mappedBy = "warehouse",
-            cascade = CascadeType.ALL,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
             fetch = FetchType.LAZY
     )
     @Builder.Default

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { loginAPI } from '../services/auth';
 import { Mail, Lock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import loginBg from '../assets/login_background.png';
-import viettelLogo from '../assets/viettel_logo.png';
+import viettelLogo from '../assets/logo-viettel.png';
 import './Login.css';
 
 const Login: React.FC = () => {

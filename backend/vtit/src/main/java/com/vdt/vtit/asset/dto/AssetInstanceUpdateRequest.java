@@ -33,4 +33,6 @@ public class AssetInstanceUpdateRequest {
 
     private Long maintenanceCost;
 
+    private Long warehouseId;
+
 }

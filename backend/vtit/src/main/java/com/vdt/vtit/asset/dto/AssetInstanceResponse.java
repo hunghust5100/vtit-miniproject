@@ -40,4 +40,8 @@ public class AssetInstanceResponse {
     private Double adjustmentFactor;
 
     private Long maintenanceCost;
+
+    private Long warehouseId;
+
+    private String warehouseName;
 }

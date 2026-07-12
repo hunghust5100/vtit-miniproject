@@ -24,4 +24,6 @@ public interface AssetInstanceService {
     void deleteAssetInstanceById(Long id);
 
     UnusedAssetsReportResponse getUnusedAssetsReport();
+
+    AssetInstanceResponse getAssetInstanceBySerial(String serial);
 }

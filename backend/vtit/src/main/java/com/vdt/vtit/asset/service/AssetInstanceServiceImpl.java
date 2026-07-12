@@ -9,6 +9,8 @@ import com.vdt.vtit.asset.entity.AssetModel;
 import com.vdt.vtit.asset.repository.AssetInstanceRepository;
 import com.vdt.vtit.asset.repository.AssetModelRepository;
 import com.vdt.vtit.common.exception.BadRequestException;
+import com.vdt.vtit.warehouse.entity.Warehouse;
+import com.vdt.vtit.warehouse.repository.WarehouseRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 public class AssetInstanceServiceImpl implements AssetInstanceService {
     private final AssetInstanceRepository assetInstanceRepository;
     private final AssetModelRepository assetModelRepository;
+    private final WarehouseRepository warehouseRepository;
 
     @Override
     public AssetInstanceResponse createAssetInstance(AssetInstanceCreateRequest request) {
@@ -42,6 +45,12 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
         Double factor = request.getAdjustmentFactor() != null ? request.getAdjustmentFactor() : assetModel.getAdjustmentFactor();
         Long netVal = request.getNetBookValue() != null ? request.getNetBookValue() : request.getPurchasePrice();
         Long salvage = request.getSalvageValue() != null ? request.getSalvageValue() : 0L;
+
+        Warehouse warehouse = null;
+        if (request.getWarehouseId() != null) {
+            warehouse = warehouseRepository.findById(request.getWarehouseId())
+                    .orElseThrow(() -> new BadRequestException("Không tìm thấy kho hàng"));
+        }
 
         AssetInstance assetInstance = AssetInstance.builder()
                 .assetModel(assetModel)
@@ -57,6 +66,7 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .netBookValue(netVal)
                 .salvageValue(salvage)
                 .maintenanceCost(request.getMaintenanceCost())
+                .warehouse(warehouse)
                 .build();
 
         return mapToAssetInstanceResponse(assetInstanceRepository.save(assetInstance));
@@ -100,6 +110,12 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
         AssetModel assetModel = assetModelRepository.findById(request.getAssetModelId())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy model"));
 
+        Warehouse warehouse = null;
+        if (request.getWarehouseId() != null) {
+            warehouse = warehouseRepository.findById(request.getWarehouseId())
+                    .orElseThrow(() -> new BadRequestException("Không tìm thấy kho hàng"));
+        }
+
         assetInstance.setAssetModel(assetModel);
         assetInstance.setSerial(request.getSerial());
         assetInstance.setSpecification(request.getSpecification());
@@ -113,6 +129,7 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
         assetInstance.setDepreciationCycle(request.getDepreciationCycle());
         assetInstance.setAdjustmentFactor(request.getAdjustmentFactor());
         assetInstance.setMaintenanceCost(request.getMaintenanceCost());
+        assetInstance.setWarehouse(warehouse);
 
         return mapToAssetInstanceResponse(assetInstanceRepository.save(assetInstance));
     }
@@ -190,6 +207,8 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .depreciationCycle(assetInstance.getDepreciationCycle())
                 .adjustmentFactor(assetInstance.getAdjustmentFactor())
                 .maintenanceCost(assetInstance.getMaintenanceCost())
+                .warehouseId(assetInstance.getWarehouse() != null ? assetInstance.getWarehouse().getId() : null)
+                .warehouseName(assetInstance.getWarehouse() != null ? assetInstance.getWarehouse().getName() : null)
                 .build();
     }
 
@@ -220,5 +239,12 @@ public class AssetInstanceServiceImpl implements AssetInstanceService {
                 .totalPurchasePrice(totalPurchasePrice)
                 .unusedAssets(responseList)
                 .build();
+    }
+
+    @Override
+    public AssetInstanceResponse getAssetInstanceBySerial(String serial) {
+        AssetInstance assetInstance = assetInstanceRepository.findBySerial(serial)
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy thiết bị với số serial: " + serial));
+        return mapToAssetInstanceResponse(assetInstance);
     }
 }

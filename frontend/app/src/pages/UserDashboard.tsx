@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { 
@@ -39,6 +40,7 @@ interface AssignedAsset {
 const UserDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const appBaseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -342,6 +344,18 @@ const UserDashboard: React.FC = () => {
                           <strong>{selectedAssetDetail.purchasePrice ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedAssetDetail.purchasePrice) : '-'}</strong>
                         </div>
                       </div>
+                    </div>
+
+                    {/* QR Code Section */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', marginTop: '8px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-secondary)' }}>MÃ QR THIẾT BỊ</div>
+                      <QRCodeSVG
+                        id={`qr-user-${selectedAssetDetail.serial}`}
+                        value={`${appBaseUrl}/qr-scan/${selectedAssetDetail.serial}`}
+                        size={120}
+                        includeMargin={true}
+                      />
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Quét để truy cập nhanh từ điện thoại</div>
                     </div>
                   </div>
 
