@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import api from '../../services/api';
 import { Bot, Sparkles, X, Send } from 'lucide-react';
 import './ChatbotWidget.css';
@@ -45,7 +46,10 @@ const ChatbotWidget: React.FC = () => {
       setMessages(prev => [...prev, { sender: 'bot', text: botText }]);
     } catch (err: any) {
       console.error('Chatbot error', err);
-      setMessages(prev => [...prev, { sender: 'bot', text: 'Xin lỗi bạn, kết nối với máy chủ đang bị gián đoạn. Bạn vui lòng thử lại sau nhé.' }]);
+      const errorMessage = err?.response?.status === 504 || err?.code === 'ECONNABORTED'
+        ? 'Câu hỏi của bạn đang mất nhiều thời gian xử lý hơn bình thường. Bạn vui lòng thử lại nhé.'
+        : 'Xin lỗi bạn, kết nối với máy chủ đang bị gián đoạn. Bạn vui lòng thử lại sau nhé.';
+      setMessages(prev => [...prev, { sender: 'bot', text: errorMessage }]);
     } finally {
       setLoading(false);
     }
@@ -90,12 +94,18 @@ const ChatbotWidget: React.FC = () => {
           <div className="chatbot-messages-container">
             {messages.map((msg, index) => (
               <div key={index} className={`chatbot-message ${msg.sender}`}>
-                {msg.text.split('\n').map((line, i) => (
-                  <React.Fragment key={i}>
-                    {line}
-                    <br />
-                  </React.Fragment>
-                ))}
+                {msg.sender === 'bot' ? (
+                  <div className="chatbot-markdown-content">
+                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                  </div>
+                ) : (
+                  msg.text.split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i < msg.text.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                  ))
+                )}
               </div>
             ))}
             

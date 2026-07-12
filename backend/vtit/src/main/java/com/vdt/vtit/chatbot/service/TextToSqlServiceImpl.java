@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -29,7 +30,7 @@ public class TextToSqlServiceImpl implements TextToSqlService {
                 Bạn là chuyên gia cơ sở dữ liệu PostgreSQL cho Hệ thống Quản lý Tài sản VTIT.
                 Hãy chuyển câu hỏi tiếng Việt của người dùng thành một câu lệnh SQL SELECT hợp lệ duy nhất để chạy trên cơ sở dữ liệu PostgreSQL.
                 
-                THÔNG TIN CƠ SÀ DỮ LIỆU (SCHEMA):
+                THÔNG TIN CƠ SỞ DỮ LIỆU (SCHEMA):
                 1. Bảng `departments` (Phòng ban):
                    - `id` (BIGINT, Khóa chính)
                    - `name` (VARCHAR, Tên phòng ban)
@@ -77,11 +78,31 @@ public class TextToSqlServiceImpl implements TextToSqlService {
                    - `received_at` (TIMESTAMP, Ngày nhận thiết bị thực tế)
                    - `returned_at` (TIMESTAMP, Ngày trả thiết bị thực tế)
                 
+                QUAN HỆ GIỮA CÁC BẢNG (JOIN PATH):
+                - users.department_id → departments.id (Nhân viên thuộc phòng ban nào)
+                - asset_instances.asset_model_id → asset_models.id (Thiết bị thuộc dòng máy nào)
+                - asset_models.asset_type_id → asset_types.id (Dòng máy thuộc loại thiết bị nào)
+                - allocations.asset_instance_id → asset_instances.id (Yêu cầu cấp phát cho thiết bị nào)
+                - allocations.staff_id → users.id (Ai yêu cầu cấp phát)
+                
+                VÍ DỤ CÂU HỎI VÀ SQL TƯƠNG ỨNG:
+                - "Có bao nhiêu laptop?" → SELECT COUNT(*) AS total FROM asset_instances ai JOIN asset_models am ON ai.asset_model_id = am.id JOIN asset_types at ON am.asset_type_id = at.id WHERE at.name ILIKE '%laptop%'
+                - "Tổng giá trị tài sản?" → SELECT SUM(purchase_price) AS total_value FROM asset_instances
+                - "Ai đang mượn thiết bị?" → SELECT u.full_name, am.name AS model_name, al.received_at FROM allocations al JOIN users u ON al.staff_id = u.id JOIN asset_instances ai ON al.asset_instance_id = ai.id JOIN asset_models am ON ai.asset_model_id = am.id WHERE al.status = 'USING'
+                - "Bao nhiêu thiết bị đang rảnh?" → SELECT COUNT(*) AS total FROM asset_instances WHERE status = 'AVAILABLE'
+                - "Tổng khấu hao?" → SELECT SUM(purchase_price - net_book_value) AS total_depreciation FROM asset_instances
+                - "Danh sách phòng ban?" → SELECT id, name, category, location FROM departments
+                - "Có bao nhiêu nhân viên?" → SELECT COUNT(*) AS total FROM users WHERE enabled = true
+                
                 QUY TẮC BẮT BUỘC:
-                1. Chỉ trả ra câu lệnh SQL SELECT duy nhất, KHÔNG viết bất cứ chữ giải thích nào khác.
+                1. CHỈ trả ra đúng 1 câu SQL SELECT duy nhất. KHÔNG viết bất kỳ giải thích, comment, hoặc chữ nào khác.
                 2. KHÔNG bao gồm các câu lệnh chỉnh sửa dữ liệu (INSERT, UPDATE, DELETE, ALTER, DROP, TRUNCATE...).
-                3. Khi so sánh chuỗi hoặc tên dòng máy, sử dụng ILIKE và dấu % để tìm kiếm gần đúng (ví dụ: am.name ILIKE '%Dell%').
-                4. Hãy thực hiện kết nối bảng (JOIN) chính xác nếu câu hỏi yêu cầu dữ liệu liên quan giữa các bảng.
+                3. KHÔNG thêm dấu chấm phẩy (;) ở cuối câu SQL.
+                4. KHÔNG bao câu SQL trong markdown code block (```) hay bất kỳ ký tự đặc biệt nào.
+                5. Khi so sánh chuỗi hoặc tên, sử dụng ILIKE và dấu %% để tìm kiếm gần đúng.
+                6. Khi JOIN nhiều bảng, LUÔN dùng alias ngắn gọn (ví dụ: ai cho asset_instances, am cho asset_models, at cho asset_types, u cho users, d cho departments, al cho allocations).
+                7. Giá trị enum status PHẢI viết đúng IN UPPER CASE và trong dấu nháy đơn (ví dụ: 'AVAILABLE', 'USING', 'PENDING').
+                8. Nếu câu hỏi yêu cầu đếm, LUÔN dùng alias cho cột kết quả (ví dụ: COUNT(*) AS total).
                 """;
 
         try {
@@ -92,17 +113,25 @@ public class TextToSqlServiceImpl implements TextToSqlService {
                     .call()
                     .content();
 
-            String sql = cleanSql(rawSqlResponse);
-            log.info("Text-to-SQL: Mã SQL được sinh ra: \n{}", sql);
+            log.info("Text-to-SQL: Phản hồi thô từ LLM: \n{}", rawSqlResponse);
 
-            // 3. Kiểm tra an toàn SQL (Read-Only)
+            String sql = cleanSql(rawSqlResponse);
+            log.info("Text-to-SQL: Mã SQL đã clean: \n{}", sql);
+
+            // 3. Kiểm tra SQL trống
+            if (sql.isBlank()) {
+                log.warn("Text-to-SQL: LLM trả về SQL rỗng sau khi clean");
+                return "Xin lỗi bạn, mình chưa thể hiểu câu hỏi này để truy vấn dữ liệu. Bạn thử hỏi cụ thể hơn nhé!";
+            }
+
+            // 4. Kiểm tra an toàn SQL (Read-Only)
             validateSafeQuery(sql);
 
-            // 4. Thực thi truy vấn
+            // 5. Thực thi truy vấn
             List<Map<String, Object>> queryResults = jdbcTemplate.queryForList(sql);
             log.info("Text-to-SQL: Kết quả truy vấn DB: {} dòng dữ liệu.", queryResults.size());
 
-            // 5. Tổng hợp phản hồi tự nhiên cho người dùng
+            // 6. Tổng hợp phản hồi tự nhiên cho người dùng
             String responseSystemPrompt = """
                     Bạn là Trợ lý ảo thông minh của Hệ thống Quản lý Tài sản VTIT.
                     Hãy trả lời câu hỏi của người dùng một cách thân thiện, xưng hô là "mình" và gọi người dùng là "bạn".
@@ -110,9 +139,11 @@ public class TextToSqlServiceImpl implements TextToSqlService {
                     
                     QUY TẮC PHẢN HỒI:
                     1. Câu trả lời phải CỰC KỲ ngắn gọn, trực diện, không dài dòng. Đi thẳng vào số liệu ở câu đầu tiên.
-                    2. Nếu kết quả truy vấn trống, rỗng hoặc giá trị bằng 0 (ví dụ: [], null, [{sum=null}], [{count=0}], [{count=null}]), hãy trả lời ngay là hiện tại hệ thống chưa có dữ liệu hoặc dữ liệu bằng 0. TUYỆT ĐỐI không bịa số liệu, không giải thích lý thuyết hay lấy cớ hệ thống chưa nạp cẩm nang/chính sách RAG.
+                    2. Nếu kết quả truy vấn trống, rỗng hoặc giá trị bằng 0 (ví dụ: [], null, [{sum=null}], [{count=0}], [{count=null}]), hãy trả lời ngay là hiện tại hệ thống chưa có dữ liệu hoặc dữ liệu bằng 0. TUYỆT ĐỐI không bịa số liệu.
                     3. Không đề cập đến cấu trúc bảng hoặc code SQL trừ khi người dùng hỏi trực tiếp về kỹ thuật.
-                    4. Trình bày kết quả rõ ràng, nếu có danh sách thì dùng markdown list hoặc bảng biểu.
+                    4. Trình bày kết quả rõ ràng. Nếu có danh sách thì dùng markdown list (dấu -). Nếu có nhiều cột dữ liệu thì dùng markdown table.
+                    5. Số tiền VND thì format có dấu phân cách hàng nghìn (ví dụ: 15.000.000 VNĐ).
+                    6. KHÔNG viết quá 200 từ.
                     """;
 
             String responseUserPrompt = String.format("""
@@ -129,15 +160,25 @@ public class TextToSqlServiceImpl implements TextToSqlService {
 
         } catch (IllegalArgumentException e) {
             log.warn("Text-to-SQL: Cảnh báo bảo mật: {}", e.getMessage());
-            return "Yêu cầu của bạn chứa nội dung không được phép thực thi hoặc mình không thể truy cập dữ liệu sửa đổi. Bạn vui lòng chỉ hỏi các thông tin thống kê, kiểm kê tài sản nhé.";
+            return "Yêu cầu của bạn chứa nội dung không được phép thực thi. Bạn vui lòng chỉ hỏi các thông tin thống kê, kiểm kê tài sản nhé.";
         } catch (Exception e) {
-            log.error("Text-to-SQL: Lỗi khi xử lý câu hỏi", e);
-            return "Đã xảy ra lỗi trong quá trình truy vấn dữ liệu tài sản. Bạn vui lòng kiểm tra lại câu hỏi hoặc thử lại sau nhé.";
+            log.error("Text-to-SQL: Lỗi khi xử lý câu hỏi: {}", e.getMessage(), e);
+            return "Đã xảy ra lỗi trong quá trình truy vấn dữ liệu tài sản. Bạn vui lòng thử hỏi lại bằng cách khác nhé.";
         }
     }
 
+    /**
+     * Làm sạch output từ LLM: loại bỏ markdown code blocks, dấu ;, và comment SQL.
+     * Chỉ loại bỏ comment dạng dòng riêng biệt (bắt đầu bằng --), giữ nguyên nội dung trong chuỗi.
+     */
     private String cleanSql(String responseContent) {
+        if (responseContent == null) {
+            return "";
+        }
+
         String sql = responseContent.trim();
+
+        // Loại bỏ markdown code blocks
         if (sql.startsWith("```sql")) {
             sql = sql.substring(6);
         } else if (sql.startsWith("```")) {
@@ -147,42 +188,55 @@ public class TextToSqlServiceImpl implements TextToSqlService {
             sql = sql.substring(0, sql.length() - 3);
         }
         sql = sql.trim();
+
+        // Loại bỏ dấu ; ở cuối
         if (sql.endsWith(";")) {
             sql = sql.substring(0, sql.length() - 1);
         }
-        
-        // Remove single-line comments starting with '--' and inline comments
+
+        // Loại bỏ các dòng comment (chỉ các dòng bắt đầu bằng --)
+        // Không xóa -- inline để tránh ảnh hưởng đến chuỗi SQL hợp lệ
         String[] lines = sql.split("\n");
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             String trimmedLine = line.trim();
+            // Bỏ qua dòng chỉ chứa comment
             if (trimmedLine.startsWith("--")) {
                 continue;
             }
-            int commentIndex = line.indexOf("--");
-            if (commentIndex >= 0) {
-                sb.append(line.substring(0, commentIndex)).append("\n");
-            } else {
-                sb.append(line).append("\n");
-            }
+            sb.append(line).append("\n");
         }
+
         return sb.toString().trim();
     }
 
+    /**
+     * Kiểm tra SQL chỉ chứa SELECT (Read-Only).
+     * Sử dụng regex word-boundary để tránh false positive.
+     */
     private void validateSafeQuery(String sql) {
         String cleaned = sql.trim().toUpperCase();
-        if (!cleaned.startsWith("SELECT")) {
+
+        // Phải bắt đầu bằng SELECT (hoặc WITH cho CTE)
+        if (!cleaned.startsWith("SELECT") && !cleaned.startsWith("WITH")) {
             throw new IllegalArgumentException("Chỉ cho phép thực hiện các truy vấn đọc dữ liệu (SELECT).");
         }
 
-        // Chặn SQL injection sửa đổi cấu trúc/dữ liệu hoặc multiple statements
+        // Chặn multiple statements (dấu ; theo sau bởi chữ cái)
+        if (Pattern.compile(";\\s*[A-Z]").matcher(cleaned).find()) {
+            throw new IllegalArgumentException("Không cho phép thực thi nhiều câu lệnh SQL cùng lúc.");
+        }
+
+        // Chặn các từ khóa nguy hiểm sử dụng word-boundary để tránh false positive
         List<String> forbiddenKeywords = List.of(
-                "INSERT ", "UPDATE ", "DELETE ", "DROP ", "ALTER ", "TRUNCATE ", "CREATE ", "REPLACE ",
-                "GRANT ", "REVOKE ", "MERGE ", "EXECUTE ", "EXEC ", ";", "--"
+                "INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "TRUNCATE",
+                "CREATE", "REPLACE", "GRANT", "REVOKE", "MERGE", "EXECUTE", "EXEC"
         );
         for (String keyword : forbiddenKeywords) {
-            if (cleaned.contains(keyword)) {
-                throw new IllegalArgumentException("Truy vấn chứa từ khóa không hợp lệ: " + keyword.trim());
+            // Sử dụng word boundary \\b để khớp chính xác từ khóa
+            Pattern pattern = Pattern.compile("\\b" + keyword + "\\b");
+            if (pattern.matcher(cleaned).find()) {
+                throw new IllegalArgumentException("Truy vấn chứa từ khóa không hợp lệ: " + keyword);
             }
         }
     }

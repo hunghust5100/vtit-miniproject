@@ -1,6 +1,7 @@
 package com.vdt.vtit.asset.entity;
 
 import com.vdt.vtit.allocation.entity.Allocation;
+import com.vdt.vtit.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -66,6 +67,13 @@ public class AssetInstance {
     )
     @Builder.Default
     private List<Allocation> Allocations = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "warehouse_id",
+            foreignKey = @ForeignKey(name = "FK_ASSET_INSTANCE_WAREHOUSE")
+    )
+    private Warehouse warehouse;
 
     @Version
     private Long version;
