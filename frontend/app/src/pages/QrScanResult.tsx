@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { 
   Cpu, 
   User, 
@@ -54,8 +55,45 @@ const QrScanResult: React.FC = () => {
   const [loadingAsset, setLoadingAsset] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const toast = useToast();
 
   const isAdmin = user && user.role.replace(/^ROLE_/, '') === 'ADMIN';
+
+  const handleRequestSpecificDevice = async () => {
+    if (!user?.email) return;
+    if (!asset) return;
+
+    if (!window.confirm(`Bạn có chắc chắn muốn gửi yêu cầu cấp phát thiết bị này (Serial: ${asset.serial})?`)) {
+      return;
+    }
+
+    setSubmittingRequest(true);
+    try {
+      // 1. Get staff ID
+      const usersRes = await api.get('/api/v1/users?size=100');
+      const currentUser = usersRes.data?.content?.find((u: any) => u.email === user.email);
+      if (!currentUser) {
+        toast.showError('Không tìm thấy tài khoản nhân viên.');
+        return;
+      }
+
+      // 2. Submit allocation request
+      await api.post('/api/v1/allocation', {
+        assetInstanceId: asset.id,
+        staffId: currentUser.id
+      });
+
+      toast.showSuccess(`Gửi yêu cầu cấp phát thiết bị (Serial: ${asset.serial}) thành công!`);
+      navigate('/user/history');
+    } catch (err: any) {
+      console.error('Failed to submit device request', err);
+      const errMsg = err.response?.data?.message || 'Đã xảy ra lỗi khi gửi yêu cầu. Thiết bị có thể không còn sẵn sàng.';
+      toast.showError(errMsg);
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
 
   const handleBack = () => {
     // If there is browser history within our app, go back. Otherwise, go to home '/'
@@ -201,7 +239,7 @@ const QrScanResult: React.FC = () => {
         </div>
 
         {/* Asset Header Card */}
-        <div className="qr-card asset-header-card">
+        <div className="qr-card asset-header-card" style={{ marginBottom: '16px' }}>
           <div className="card-decor"></div>
           <div className="header-flex">
             <div className="device-avatar">
@@ -217,6 +255,32 @@ const QrScanResult: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Specific Request Action Card for Staff/Managers */}
+        {!isAdmin && asset.status === 'AVAILABLE' && (
+          <div className="qr-card action-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '20px', border: '1px solid var(--primary-light)', backgroundColor: 'var(--primary-light)', borderRadius: '12px', textAlign: 'center', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--primary-color)', margin: 0 }}>Thiết bị này đang sẵn sàng cấp phát!</h3>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Bạn có thể gửi yêu cầu mượn chính xác chiếc máy này (Serial: {asset.serial}) phục vụ cho công việc.</p>
+            <button
+              type="button"
+              className="qr-btn qr-btn-primary"
+              style={{ width: 'auto', minWidth: '200px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 24px', borderRadius: '50px', fontWeight: 600, fontSize: '14px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--primary-color)', color: '#fff' }}
+              onClick={handleRequestSpecificDevice}
+              disabled={submittingRequest}
+            >
+              {submittingRequest ? (
+                <>
+                  <div className="qr-spinner" style={{ width: '14px', height: '14px', border: '2px solid #fff', borderTopColor: 'transparent', margin: 0 }}></div>
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  Yêu cầu cấp phát thiết bị này
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Info Grid */}
         <div className="qr-info-grid">

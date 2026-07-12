@@ -8,7 +8,6 @@ import {
   Pencil, 
   Eye, 
   Warehouse, 
-  MapPin, 
   HardDrive, 
   PlusCircle, 
   X,
@@ -303,7 +302,8 @@ const WarehouseManagement: React.FC = () => {
         </div>
         <button 
           type="button" 
-          className="btn btn-primary"
+          className="btn-primary"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           onClick={() => handleOpenModal(null)}
         >
           <Plus size={18} />
@@ -312,11 +312,12 @@ const WarehouseManagement: React.FC = () => {
       </div>
 
       {/* Filter and Search */}
-      <div className="table-controls">
-        <div className="search-box">
-          <Search size={18} />
+      <div className="table-control-bar">
+        <div className="search-box-wrapper">
+          <Search size={18} className="search-icon-left" />
           <input 
             type="text" 
+            className="search-input"
             placeholder="Tìm kiếm kho theo tên, mã, vị trí..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -326,83 +327,71 @@ const WarehouseManagement: React.FC = () => {
 
       {/* Main Grid/Table */}
       {loading ? (
-        <div className="table-loading-container">
-          <div className="spinner"></div>
+        <div className="table-loading-spinner">
+          <div className="spinner" style={{ borderColor: 'var(--border-color)', borderTopColor: 'var(--primary-color)', width: '30px', height: '30px' }}></div>
           <span>Đang tải danh sách kho...</span>
         </div>
       ) : error ? (
-        <div className="table-error-container">
+        <div className="empty-data-view" style={{ color: 'var(--error)' }}>
           <span>{error}</span>
-          <button type="button" className="btn btn-secondary mt-2" onClick={fetchWarehouses}>Thử lại</button>
+          <button type="button" className="btn-outline" onClick={fetchWarehouses}>Thử lại</button>
         </div>
       ) : filteredWarehouses.length === 0 ? (
-        <div className="empty-state-view">
-          <Warehouse size={48} className="text-muted mb-2" />
-          <h3>Không tìm thấy kho hàng nào</h3>
-          <p>Thử điều chỉnh từ khóa tìm kiếm hoặc tạo thêm kho mới.</p>
+        <div className="empty-data-view">
+          <Warehouse size={48} style={{ color: 'var(--text-secondary)', marginBottom: '8px' }} />
+          <span>Không tìm thấy kho hàng nào phù hợp.</span>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="management-table">
+        <div className="table-container">
+          <table className="dashboard-table">
             <thead>
               <tr>
                 <th>Mã kho</th>
                 <th>Tên kho</th>
                 <th>Vị trí</th>
                 <th>Mô tả</th>
-                <th className="text-center">Số lượng thiết bị</th>
-                <th className="text-center">Thao tác</th>
+                <th style={{ textAlign: 'center' }}>Số lượng thiết bị</th>
+                <th style={{ textAlign: 'center' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {filteredWarehouses.map((w) => (
                 <tr key={w.id} className="hover-row">
-                  <td className="font-semibold text-primary">{w.code}</td>
-                  <td>
-                    <div className="flex-align gap-2">
-                      <Warehouse size={16} className="text-muted" />
-                      <strong>{w.name}</strong>
-                    </div>
-                  </td>
-                  <td>
-                    {w.location ? (
-                      <div className="flex-align gap-1 text-sm text-secondary">
-                        <MapPin size={14} />
-                        <span>{w.location}</span>
-                      </div>
-                    ) : (
-                      <span className="text-muted">-</span>
-                    )}
-                  </td>
-                  <td className="text-sm text-secondary max-w-xs truncate">{w.description || <span className="text-muted">Không có mô tả</span>}</td>
-                  <td className="text-center">
+                  <td data-label="Mã kho" className="font-semibold text-primary">{w.code}</td>
+                  <td data-label="Tên kho" style={{ fontWeight: 600 }}>{w.name}</td>
+                  <td data-label="Vị trí">{w.location || '-'}</td>
+                  <td data-label="Mô tả" className="text-sm text-secondary max-w-xs truncate">{w.description || <span className="text-muted">Không có mô tả</span>}</td>
+                  <td data-label="Số lượng thiết bị" style={{ textAlign: 'center' }}>
                     <span className="badge-count">{w.totalAssets} thiết bị</span>
                   </td>
-                  <td className="text-center">
-                    <div className="action-buttons">
+                  <td data-label="Thao tác">
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                       <button 
                         type="button" 
-                        className="action-btn btn-view" 
+                        className="btn-outline-sm" 
+                        style={{ color: 'var(--primary-color)', borderColor: 'rgba(230, 0, 0, 0.2)', padding: '5px 8px' }}
                         onClick={() => handleOpenDetailModal(w.id)}
                         title="Xem chi tiết thiết bị trong kho"
                       >
-                        <Eye size={16} />
+                        <Eye size={14} />
                       </button>
                       <button 
                         type="button" 
-                        className="action-btn btn-edit" 
+                        className="btn-outline-sm" 
+                        style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)', padding: '5px 8px' }}
                         onClick={() => handleOpenModal(w)}
                         title="Chỉnh sửa thông tin kho"
                       >
-                        <Pencil size={16} />
+                        <Pencil size={14} />
                       </button>
                       <button 
                         type="button" 
-                        className="action-btn btn-delete" 
+                        className="btn-outline-sm" 
+                        style={{ color: 'var(--error)', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '5px 8px' }}
                         onClick={() => handleDeleteWarehouse(w)}
                         title="Xóa kho"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -487,10 +476,10 @@ const WarehouseManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
+                  className="btn-outline" 
                   onClick={() => setIsModalOpen(false)}
                   disabled={submitting}
                 >
@@ -498,7 +487,7 @@ const WarehouseManagement: React.FC = () => {
                 </button>
                 <button 
                   type="submit" 
-                  className="btn btn-primary" 
+                  className="btn-primary" 
                   disabled={submitting}
                 >
                   {submitting ? 'Đang lưu...' : 'Lưu lại'}
@@ -549,13 +538,13 @@ const WarehouseManagement: React.FC = () => {
                     <span>Nhập thiết bị mới vào kho này</span>
                   </h3>
                   <form onSubmit={handleAddAsset} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                    <div style={{ flexGrow: 1, minWidth: '240px' }}>
-                      <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Chọn thiết bị chưa có kho:</label>
+                    <div style={{ flex: 1, minWidth: '280px' }}>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>Chọn thiết bị chưa có kho:</label>
                       <select 
-                        className="form-input" 
+                        className="select-filter" 
                         value={selectedAssetId} 
                         onChange={(e) => setSelectedAssetId(Number(e.target.value) || '')}
-                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                        style={{ width: '100%', backgroundColor: '#fff', borderColor: 'var(--border-color)', borderRadius: '50px', padding: '10px 16px', height: '42px', fontSize: '13px' }}
                         disabled={loadingAvailableAssets}
                       >
                         <option value="">-- Chọn thiết bị (Model - Serial) --</option>
@@ -568,8 +557,8 @@ const WarehouseManagement: React.FC = () => {
                     </div>
                     <button 
                       type="submit" 
-                      className="btn btn-primary" 
-                      style={{ height: '42px' }}
+                      className="btn-primary" 
+                      style={{ height: '42px', padding: '0 24px', borderRadius: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '13px' }}
                       disabled={!selectedAssetId}
                     >
                       Xác nhận nhập kho
@@ -593,52 +582,56 @@ const WarehouseManagement: React.FC = () => {
                     Chưa có thiết bị nào trong kho này. Hãy chọn thiết bị ở trên để nhập kho.
                   </div>
                 ) : (
-                  <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                    <table className="management-table" style={{ fontSize: '13px' }}>
+                  <div className="table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <table className="dashboard-table" style={{ fontSize: '13px' }}>
                       <thead style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#ffffff' }}>
                         <tr>
                           <th>Serial</th>
                           <th>Model</th>
                           <th>Chủng loại</th>
-                          <th className="text-center">Trạng thái Thiết bị</th>
-                          <th className="text-center">Trạng thái Xuất kho</th>
+                          <th style={{ textAlign: 'center' }}>Trạng thái Thiết bị</th>
+                          <th style={{ textAlign: 'center' }}>Trạng thái Xuất kho</th>
                           <th>Người sử dụng</th>
-                          <th className="text-center">Thao tác</th>
+                          <th style={{ textAlign: 'center' }}>Thao tác</th>
                         </tr>
                       </thead>
                       <tbody>
                         {warehouseDetail.assets.map((asset) => (
                           <tr key={asset.id}>
-                            <td><strong>{asset.serial}</strong></td>
-                            <td>{asset.modelName}</td>
-                            <td>{asset.typeName}</td>
-                            <td className="text-center">
-                              <span className={`status-badge ${asset.status.toLowerCase()}`}>
-                                {asset.status}
-                              </span>
+                            <td data-label="Serial"><strong>{asset.serial}</strong></td>
+                            <td data-label="Model">{asset.modelName}</td>
+                            <td data-label="Chủng loại">{asset.typeName}</td>
+                            <td data-label="Trạng thái Thiết bị">
+                              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                <span className={`status-badge ${asset.status.toLowerCase()}`}>
+                                  {asset.status}
+                                </span>
+                              </div>
                             </td>
-                            <td className="text-center">
-                              <span className={getExportStatusClass(asset.exportStatus)} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                {getExportStatusIcon(asset.exportStatus)}
-                                <span>{asset.exportStatus}</span>
-                              </span>
+                            <td data-label="Trạng thái Xuất kho">
+                              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                <span className={getExportStatusClass(asset.exportStatus)} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                  {getExportStatusIcon(asset.exportStatus)}
+                                  <span>{asset.exportStatus}</span>
+                                </span>
+                              </div>
                             </td>
-                            <td>
+                            <td data-label="Người sử dụng">
                               {asset.allocatedToStaff ? (
                                 <span className="font-semibold text-dark">{asset.allocatedToStaff}</span>
                               ) : (
                                 <span className="text-muted">Chưa bàn giao</span>
                               )}
                             </td>
-                            <td className="text-center">
+                            <td data-label="Thao tác">
                               <button 
                                 type="button" 
-                                className="action-btn btn-delete"
+                                className="btn-outline-sm"
                                 onClick={() => handleRemoveAsset(asset.id, asset.serial)}
                                 title="Bỏ thiết bị khỏi kho"
-                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '6px' }}
+                                style={{ color: 'var(--error)', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '5px 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                               >
-                                <XCircle size={16} />
+                                <XCircle size={14} />
                               </button>
                             </td>
                           </tr>
@@ -651,7 +644,7 @@ const WarehouseManagement: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
                   <button 
                     type="button" 
-                    className="btn btn-secondary" 
+                    className="btn-outline" 
                     onClick={() => setIsDetailModalOpen(false)}
                   >
                     Đóng lại

@@ -6,4 +6,5 @@ import lombok.Data;
 public class AllocationCreateRequest {
     private Long assetModelId;
     private Long staffId;
+    private Long assetInstanceId;
 }

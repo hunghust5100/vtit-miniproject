@@ -36,19 +36,27 @@ public class AllocationServiceImpl implements AllocationService{
         User staff = userRepository.findById(request.getStaffId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên"));
 
-        Pageable limitOne = PageRequest.of(0,1);
-        Page<AssetInstance> availableAsset = assetInstanceRepository
-                .findByFilter(
-                        "AVAILABLE",
-                        request.getAssetModelId(),
-                        limitOne
-                );
+        AssetInstance assetInstance;
+        if (request.getAssetInstanceId() != null) {
+            assetInstance = assetInstanceRepository.findById(request.getAssetInstanceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thiết bị với ID: " + request.getAssetInstanceId()));
+            if (!"AVAILABLE".equals(assetInstance.getStatus())) {
+                throw new BadRequestException("Thiết bị này không khả dụng để cấp phát (Trạng thái hiện tại: " + assetInstance.getStatus() + ")");
+            }
+        } else {
+            Pageable limitOne = PageRequest.of(0, 1);
+            Page<AssetInstance> availableAsset = assetInstanceRepository
+                    .findByFilter(
+                            "AVAILABLE",
+                            request.getAssetModelId(),
+                            limitOne
+                    );
 
-        if (availableAsset.isEmpty()) {
-            throw new BadRequestException("Không có thiết bị nào sẵn sàng");
+            if (availableAsset.isEmpty()) {
+                throw new BadRequestException("Không có thiết bị nào sẵn sàng");
+            }
+            assetInstance = availableAsset.getContent().getFirst();
         }
-
-        AssetInstance assetInstance = availableAsset.getContent().getFirst();
         assetInstance.setStatus("PENDING");
 
         Allocation allocation = new Allocation();
