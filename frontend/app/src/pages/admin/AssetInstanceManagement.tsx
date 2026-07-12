@@ -166,13 +166,24 @@ const AssetInstanceManagement: React.FC = () => {
 
   const printQrCode = () => {
     if (!qrInstance) return;
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
     const svgElement = document.getElementById(`qr-${qrInstance.serial}`);
     if (!svgElement) return;
     const svgString = svgElement.outerHTML;
     
-    printWindow.document.write(`
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+    
+    const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!iframeDoc) {
+      document.body.removeChild(iframe);
+      return;
+    }
+    
+    iframeDoc.write(`
       <html>
         <head>
           <title>In mã QR - ${qrInstance.serial}</title>
@@ -204,15 +215,19 @@ const AssetInstanceManagement: React.FC = () => {
             <p>Serial: ${qrInstance.serial}</p>
           </div>
           <script>
-            setTimeout(function() {
+            window.onload = function() {
+              window.focus();
               window.print();
-              window.close();
-            }, 300);
+            };
           </script>
         </body>
       </html>
     `);
-    printWindow.document.close();
+    iframeDoc.close();
+    
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
   };
 
   // Confirm Modal State

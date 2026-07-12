@@ -46,6 +46,21 @@ interface AllocationItem {
   returnedAt: string | null;
 }
 
+const formatLocalDate = (dateVal: any): string => {
+  if (!dateVal) return '';
+  if (typeof dateVal === 'string') {
+    return dateVal.split('T')[0];
+  }
+  if (Array.isArray(dateVal)) {
+    const [year, month, day] = dateVal;
+    const yyyy = year.toString();
+    const mm = month < 10 ? `0${month}` : month.toString();
+    const dd = day < 10 ? `0${day}` : day.toString();
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return '';
+};
+
 const UserManagement: React.FC = () => {
   const toast = useToast();
   // Server-side State
@@ -175,7 +190,7 @@ const UserManagement: React.FC = () => {
     setNewEmail(userToEdit.email);
     setNewFullName(userToEdit.fullName);
     setNewPhone(userToEdit.phoneNumber || '');
-    setNewBirthday(userToEdit.birthday || '');
+    setNewBirthday(formatLocalDate(userToEdit.birthday));
     setNewPassword(''); // Password is not editable through PUT /api/v1/users/{id}
     setNewRole(userToEdit.role ? userToEdit.role.replace(/^ROLE_/, '') : 'USER');
     setModalError(null);

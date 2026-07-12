@@ -25,6 +25,21 @@ interface UserProfileData {
   createdAt: string;
 }
 
+const formatLocalDate = (dateVal: any): string => {
+  if (!dateVal) return '';
+  if (typeof dateVal === 'string') {
+    return dateVal.split('T')[0];
+  }
+  if (Array.isArray(dateVal)) {
+    const [year, month, day] = dateVal;
+    const yyyy = year.toString();
+    const mm = month < 10 ? `0${month}` : month.toString();
+    const dd = day < 10 ? `0${day}` : day.toString();
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return '';
+};
+
 const UserProfile: React.FC = () => {
   const { user, login } = useAuth();
   const toast = useToast();
@@ -62,7 +77,7 @@ const UserProfile: React.FC = () => {
       setProfile(profileData);
       setFullNameInput(profileData.fullName || '');
       setPhoneInput(profileData.phoneNumber || '');
-      setBirthdayInput(profileData.birthday ? profileData.birthday.split('T')[0] : '');
+      setBirthdayInput(formatLocalDate(profileData.birthday));
     } catch (err: any) {
       console.error('Failed to load profile data', err);
       setError(err.message || 'Lỗi khi đồng bộ dữ liệu với máy chủ.');
