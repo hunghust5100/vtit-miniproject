@@ -12,6 +12,11 @@ public interface AllocationRepository extends JpaRepository<Allocation, Long> {
 
     Page<Allocation> findByAssetInstanceId(Long assetInstanceId, Pageable pageable);
 
+    Page<Allocation> findByStaffDepartmentId(Long departmentId, Pageable pageable);
+
+    Page<Allocation> findByAssetInstanceIdAndStaffDepartmentId(Long assetInstanceId, Long departmentId, Pageable pageable);
+
     List<Allocation> findByStatusAndRequestAtBefore(String status, LocalDateTime dateTime);
 }
+
 

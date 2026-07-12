@@ -79,21 +79,10 @@ const UserAllocationHistory: React.FC = () => {
     setConfirmOpen(true);
   };
 
-  const fetchStaffId = async () => {
-    if (!user?.email) return;
-    try {
-      const usersRes = await api.get('/api/v1/users?size=100');
-      const currentUser = usersRes.data?.content?.find((u: any) => u.email === user.email);
-      if (!currentUser) {
-        throw new Error('Không tìm thấy tài khoản nhân viên.');
-      }
-      setStaffId(currentUser.id);
-      fetchAllocations(currentUser.id);
-    } catch (err: any) {
-      console.error('Failed to fetch user profile', err);
-      setError(err.message || 'Lỗi khi kết nối với máy chủ.');
-      setLoading(false);
-    }
+  const fetchStaffId = () => {
+    if (!user?.id) return;
+    setStaffId(user.id);
+    fetchAllocations(user.id);
   };
 
   const fetchAllocations = async (currentStaffId: number) => {
@@ -133,7 +122,7 @@ const UserAllocationHistory: React.FC = () => {
 
   useEffect(() => {
     fetchStaffId();
-  }, [user?.email]);
+  }, [user?.id]);
 
   // Refetch when page or status filter changes
   useEffect(() => {
@@ -198,7 +187,7 @@ const UserAllocationHistory: React.FC = () => {
     const status = statusStr ? statusStr.toUpperCase() : 'PENDING';
     
     if (status === 'PENDING' && requestAtStr) {
-      const expirationTime = new Date(requestAtStr).getTime() + 24 * 60 * 60 * 1000;
+      const expirationTime = new Date(requestAtStr.replace('T', ' ')).getTime() + 24 * 60 * 60 * 1000;
       const diff = expirationTime - currentTime;
       if (diff <= 0) {
         return <span className="status-badge inactive" style={{ backgroundColor: '#f1f5f9', color: '#94a3b8' }}>Đã hủy (Quá hạn)</span>;

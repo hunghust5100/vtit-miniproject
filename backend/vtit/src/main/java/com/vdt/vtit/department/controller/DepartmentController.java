@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -17,15 +18,17 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/department")
 @RequiredArgsConstructor
-public class DepartmentController{
+public class DepartmentController {
     private final DepartmentService departmentService;
 
     @PostMapping
-    public ResponseEntity<DepartmentResponse> createDepartment(@Valid  @RequestBody DepartmentCreateRequest request) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DepartmentResponse> createDepartment(@Valid @RequestBody DepartmentCreateRequest request) {
         return new ResponseEntity<>(departmentService.createDepartment(request), HttpStatus.CREATED);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<DepartmentResponse>> getDepartment(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -36,11 +39,13 @@ public class DepartmentController{
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<DepartmentResponse> getDepartmentById(@PathVariable Long id) {
         return ResponseEntity.ok(departmentService.getDepartmentById(id));
     }
 
     @GetMapping("/{id}/staffs")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<UserResponse>> getStaffFromDepartment(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
@@ -52,11 +57,13 @@ public class DepartmentController{
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepartmentResponse> updateDepartment(@PathVariable Long id, @Valid @RequestBody DepartmentUpdateRequest request) {
         return ResponseEntity.ok(departmentService.updateDepartment(id, request));
     }
 
     @PutMapping("/{departmentId}/staff/{staffId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepartmentResponse> addStaffToDepartment(
             @PathVariable Long departmentId,
             @PathVariable Long staffId) {
@@ -64,17 +71,19 @@ public class DepartmentController{
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> deleteDepartment(Long id) {
         departmentService.deleteDepartment(id);
         return ResponseEntity.ok(Map.of("String", "Xóa phòng ban thành công"));
     }
 
     @DeleteMapping("/{departmentId}/staff/{staffId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepartmentResponse> removeStaffFromDepartment(
             @PathVariable Long departmentId,
             @PathVariable Long staffId
     ) {
         return ResponseEntity.ok(departmentService.removeStaffFromDepartment(departmentId, staffId));
     }
-
 }
+

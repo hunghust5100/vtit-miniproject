@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { 
   ClipboardList, 
   History,
@@ -37,18 +38,25 @@ const UserRequests: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [checkingSerial, setCheckingSerial] = useState(false);
 
+  // Confirm Modal state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState('');
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [onConfirmCallback, setOnConfirmCallback] = useState<(() => void) | null>(null);
+
+  const triggerConfirm = (title: string, message: string, callback: () => void) => {
+    setConfirmTitle(title);
+    setConfirmMessage(message);
+    setOnConfirmCallback(() => callback);
+    setConfirmOpen(true);
+  };
+
   const fetchUserDataAndModels = async () => {
-    if (!user?.email) return;
+    if (!user?.id) return;
     setLoading(true);
     setError(null);
     try {
-      // 1. Get staff ID
-      const usersRes = await api.get('/api/v1/users?size=100');
-      const currentUser = usersRes.data?.content?.find((u: any) => u.email === user.email);
-      if (!currentUser) {
-        throw new Error('Không tìm thấy tài khoản nhân viên.');
-      }
-      setStaffId(currentUser.id);
+      setStaffId(user.id);
 
       // 2. Get asset models
       const modelsRes = await api.get('/api/v1/assets/model?size=100');
@@ -63,33 +71,35 @@ const UserRequests: React.FC = () => {
 
   useEffect(() => {
     fetchUserDataAndModels();
-  }, [user?.email]);
+  }, [user?.id]);
 
-  const handleRequestModel = async (model: AssetModel) => {
+  const handleRequestModel = (model: AssetModel) => {
     if (staffId === null) {
       toast.showError('Không xác định được ID nhân viên. Vui lòng đăng nhập lại.');
       return;
     }
 
-    if (!window.confirm(`Xác nhận gửi yêu cầu cấp phát dòng thiết bị: ${model.name}?`)) {
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await api.post('/api/v1/allocation', {
-        assetModelId: model.id,
-        staffId: staffId
-      });
-      toast.showSuccess(`Gửi yêu cầu cấp phát dòng máy ${model.name} thành công!`);
-      navigate('/user/history');
-    } catch (err: any) {
-      console.error('Failed to submit allocation request', err);
-      const errMsg = err.response?.data?.message || 'Đã xảy ra lỗi khi gửi yêu cầu. Có thể dòng thiết bị này đã hết máy sẵn sàng trong kho.';
-      toast.showError(errMsg);
-    } finally {
-      setSubmitting(false);
-    }
+    triggerConfirm(
+      'Xác nhận gửi yêu cầu',
+      `Bạn có chắc chắn muốn gửi yêu cầu cấp phát dòng thiết bị: ${model.name}?`,
+      async () => {
+        setSubmitting(true);
+        try {
+          await api.post('/api/v1/allocation', {
+            assetModelId: model.id,
+            staffId: staffId
+          });
+          toast.showSuccess(`Gửi yêu cầu cấp phát dòng máy ${model.name} thành công!`);
+          navigate('/user/history');
+        } catch (err: any) {
+          console.error('Failed to submit allocation request', err);
+          const errMsg = err.response?.data?.message || 'Đã xảy ra lỗi khi gửi yêu cầu. Có thể dòng thiết bị này đã hết máy sẵn sàng trong kho.';
+          toast.showError(errMsg);
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    );
   };
 
   const handleRequestSerial = async (e: React.FormEvent) => {
@@ -353,6 +363,17 @@ const UserRequests: React.FC = () => {
 
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title={confirmTitle}
+        message={confirmMessage}
+        onConfirm={() => {
+          if (onConfirmCallback) onConfirmCallback();
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 };

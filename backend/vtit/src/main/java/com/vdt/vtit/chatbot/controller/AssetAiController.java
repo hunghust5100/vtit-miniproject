@@ -8,11 +8,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/asset-assistant")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('USER')")
 public class AssetAiController {
 
     private final AssetAiFacade assetAiFacade;

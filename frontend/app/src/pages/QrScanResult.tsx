@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { 
   Cpu, 
   User, 
@@ -58,41 +59,48 @@ const QrScanResult: React.FC = () => {
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const toast = useToast();
 
+  // Confirm Modal state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState('');
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [onConfirmCallback, setOnConfirmCallback] = useState<(() => void) | null>(null);
+
+  const triggerConfirm = (title: string, message: string, callback: () => void) => {
+    setConfirmTitle(title);
+    setConfirmMessage(message);
+    setOnConfirmCallback(() => callback);
+    setConfirmOpen(true);
+  };
+
   const isAdmin = user && user.role.replace(/^ROLE_/, '') === 'ADMIN';
 
-  const handleRequestSpecificDevice = async () => {
-    if (!user?.email) return;
+  const handleRequestSpecificDevice = () => {
+    if (!user?.id) return;
     if (!asset) return;
 
-    if (!window.confirm(`Bạn có chắc chắn muốn gửi yêu cầu cấp phát thiết bị này (Serial: ${asset.serial})?`)) {
-      return;
-    }
+    triggerConfirm(
+      'Xác nhận gửi yêu cầu',
+      `Bạn có chắc chắn muốn gửi yêu cầu cấp phát thiết bị này (Serial: ${asset.serial})?`,
+      async () => {
+        setSubmittingRequest(true);
+        try {
+          // 2. Submit allocation request
+          await api.post('/api/v1/allocation', {
+            assetInstanceId: asset.id,
+            staffId: user.id
+          });
 
-    setSubmittingRequest(true);
-    try {
-      // 1. Get staff ID
-      const usersRes = await api.get('/api/v1/users?size=100');
-      const currentUser = usersRes.data?.content?.find((u: any) => u.email === user.email);
-      if (!currentUser) {
-        toast.showError('Không tìm thấy tài khoản nhân viên.');
-        return;
+          toast.showSuccess(`Gửi yêu cầu cấp phát thiết bị (Serial: ${asset.serial}) thành công!`);
+          navigate('/user/history');
+        } catch (err: any) {
+          console.error('Failed to submit device request', err);
+          const errMsg = err.response?.data?.message || 'Đã xảy ra lỗi khi gửi yêu cầu. Thiết bị có thể không còn sẵn sàng.';
+          toast.showError(errMsg);
+        } finally {
+          setSubmittingRequest(false);
+        }
       }
-
-      // 2. Submit allocation request
-      await api.post('/api/v1/allocation', {
-        assetInstanceId: asset.id,
-        staffId: currentUser.id
-      });
-
-      toast.showSuccess(`Gửi yêu cầu cấp phát thiết bị (Serial: ${asset.serial}) thành công!`);
-      navigate('/user/history');
-    } catch (err: any) {
-      console.error('Failed to submit device request', err);
-      const errMsg = err.response?.data?.message || 'Đã xảy ra lỗi khi gửi yêu cầu. Thiết bị có thể không còn sẵn sàng.';
-      toast.showError(errMsg);
-    } finally {
-      setSubmittingRequest(false);
-    }
+    );
   };
 
   const handleBack = () => {
@@ -413,6 +421,17 @@ const QrScanResult: React.FC = () => {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title={confirmTitle}
+        message={confirmMessage}
+        onConfirm={() => {
+          if (onConfirmCallback) onConfirmCallback();
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 };

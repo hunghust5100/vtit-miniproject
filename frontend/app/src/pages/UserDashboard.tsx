@@ -56,19 +56,11 @@ const UserDashboard: React.FC = () => {
   const [detailError, setDetailError] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
-    if (!user?.email) return;
+    if (!user?.id) return;
     setLoading(true);
     setError(null);
     try {
-      // 1. Get staff ID by email
-      const usersRes = await api.get('/api/v1/users?size=100');
-      const currentUser = usersRes.data?.content?.find((u: any) => u.email === user.email);
-      
-      if (!currentUser) {
-        throw new Error('Không tìm thấy thông tin tài khoản nhân viên trên hệ thống.');
-      }
-      
-      const currentStaffId = currentUser.id;
+      const currentStaffId = user.id;
 
       // 2. Fetch allocations for this staff
       const allocRes = await api.get(`/api/v1/allocation/staff/${currentStaffId}?size=50&sortBy=id&sortDir=desc`);
@@ -114,7 +106,7 @@ const UserDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [user?.email]);
+  }, [user?.id]);
 
   const handleOpenDetailModal = async (assetId: number) => {
     setIsDetailOpen(true);

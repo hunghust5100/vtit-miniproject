@@ -45,19 +45,11 @@ const ManagerDashboard: React.FC = () => {
   const [staffMembers, setStaffMembers] = useState<UserResponse[]>([]);
 
   const fetchDepartmentData = async () => {
-    if (!user?.email) return;
+    if (!user?.id) return;
     setLoading(true);
     setError(null);
     try {
-      // 1. Get current manager ID by matching email
-      const usersRes = await api.get('/api/v1/users?size=100');
-      const currentManager = usersRes.data?.content?.find((u: any) => u.email === user.email);
-      
-      if (!currentManager) {
-        throw new Error('Không tìm thấy thông tin tài khoản trên hệ thống.');
-      }
-      
-      const managerId = currentManager.id;
+      const managerId = user.id;
 
       // 2. Fetch all departments and find the one managed by this manager
       const deptsRes = await api.get('/api/v1/department?size=100');
@@ -83,7 +75,7 @@ const ManagerDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDepartmentData();
-  }, [user?.email]);
+  }, [user?.id]);
 
   const getRoleLabel = (roleStr: string) => {
     const r = roleStr.replace(/^ROLE_/, '');

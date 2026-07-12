@@ -5,12 +5,14 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   token: string;
+  id: number;
   email: string;
   fullName: string;
   role: string;
 }
 
 export interface User {
+  id: number;
   email: string;
   fullName: string;
   role: string;

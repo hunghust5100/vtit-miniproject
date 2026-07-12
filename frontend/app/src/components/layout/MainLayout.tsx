@@ -14,8 +14,7 @@ import {
   ClipboardList,
   User,
   History,
-  Warehouse,
-  Bot
+  Warehouse
 } from 'lucide-react';
 import viettelLogo from '../../assets/viettel_logo.png';
 import './MainLayout.css';
@@ -115,7 +114,6 @@ const MainLayout: React.FC = () => {
       );
     }
     
-    items.push({ path: '#ai-assistant', label: 'Trợ lý AI', icon: <Bot size={20} /> });
     items.push({ path: '/profile', label: 'Thông tin cá nhân', icon: <User size={20} /> });
     
     return items;

@@ -51,6 +51,7 @@ const Login: React.FC = () => {
       
       // Store in auth context (token and user info)
       login(response.token, {
+        id: response.id,
         email: response.email,
         fullName: response.fullName,
         role: response.role,

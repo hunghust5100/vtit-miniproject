@@ -212,7 +212,7 @@ const AllocationManagement: React.FC = () => {
     const status = statusStr ? statusStr.toUpperCase() : 'PENDING';
     
     if (status === 'PENDING' && requestAtStr) {
-      const expirationTime = new Date(requestAtStr).getTime() + 24 * 60 * 60 * 1000;
+      const expirationTime = new Date(requestAtStr.replace('T', ' ')).getTime() + 24 * 60 * 60 * 1000;
       const diff = expirationTime - currentTime;
       if (diff <= 0) {
         return <span className="status-badge inactive" style={{ backgroundColor: '#f1f5f9', color: '#94a3b8' }}>Đã hủy (Quá hạn)</span>;
@@ -369,7 +369,7 @@ const AllocationManagement: React.FC = () => {
                       <td data-label="Thao tác xử lý" className="text-nowrap" style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           {/* PENDING Actions: Approve / Reject */}
-                          {a.status === 'PENDING' && (new Date(a.requestAt).getTime() + 24 * 60 * 60 * 1000 > currentTime) && (
+                          {a.status === 'PENDING' && (new Date(a.requestAt.replace('T', ' ')).getTime() + 24 * 60 * 60 * 1000 > currentTime) && (
                             <>
                               <button
                                 type="button"
@@ -425,7 +425,7 @@ const AllocationManagement: React.FC = () => {
                           )}
                           
                           {/* Default fallback info */}
-                          {(['REJECTED', 'CANCELED', 'RETURNED'].includes(a.status) || (a.status === 'PENDING' && new Date(a.requestAt).getTime() + 24 * 60 * 60 * 1000 <= currentTime)) && (
+                          {(['REJECTED', 'CANCELED', 'RETURNED'].includes(a.status) || (a.status === 'PENDING' && new Date(a.requestAt.replace('T', ' ')).getTime() + 24 * 60 * 60 * 1000 <= currentTime)) && (
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Lưu trữ</span>
                           )}
                         </div>

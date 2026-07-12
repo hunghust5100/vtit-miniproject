@@ -10,6 +10,8 @@ import com.vdt.vtit.common.exception.BadRequestException;
 import com.vdt.vtit.common.exception.ResourceNotFoundException;
 import com.vdt.vtit.user.entity.User;
 import com.vdt.vtit.user.repository.UserRepository;
+import com.vdt.vtit.auth.entity.AppUser;
+import org.springframework.security.core.context.SecurityContextHolder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+
 @Transactional
 public class AllocationServiceImpl implements AllocationService{
 
@@ -72,6 +75,18 @@ public class AllocationServiceImpl implements AllocationService{
         return mapToAllocationResponse(saveAllocation);
     }
 
+    private User getCurrentUser() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof AppUser) {
+            return ((AppUser) principal).getUser();
+        }
+        return null;
+    }
+
     @Override
     public Page<AllocationRespond> getAllocationPagination(int page, int size, String sortBy, String sortDir) {
         releaseExpiredAllocations();
@@ -81,7 +96,23 @@ public class AllocationServiceImpl implements AllocationService{
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Allocation> allocationPage = allocationRepository.findAll(pageable);
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return Page.empty(pageable);
+        }
+
+        Page<Allocation> allocationPage;
+        if ("ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            allocationPage = allocationRepository.findAll(pageable);
+        } else if ("MANAGER".equalsIgnoreCase(currentUser.getRole())) {
+            if (currentUser.getDepartment() == null) {
+                return Page.empty(pageable);
+            }
+            allocationPage = allocationRepository.findByStaffDepartmentId(currentUser.getDepartment().getId(), pageable);
+        } else {
+            // USER (Staff)
+            allocationPage = allocationRepository.findByStaffId(currentUser.getId(), pageable);
+        }
 
         return allocationPage.map(this::mapToAllocationResponse);
     }
@@ -91,6 +122,21 @@ public class AllocationServiceImpl implements AllocationService{
         releaseExpiredAllocations();
         Allocation allocation = allocationRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy lịch sử"));
+
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            if ("MANAGER".equalsIgnoreCase(currentUser.getRole())) {
+                if (allocation.getStaff().getDepartment() == null || 
+                        currentUser.getDepartment() == null || 
+                        !allocation.getStaff().getDepartment().getId().equals(currentUser.getDepartment().getId())) {
+                    throw new BadRequestException("Bạn không có quyền xem lịch sử cấp phát này.");
+                }
+            } else if ("USER".equalsIgnoreCase(currentUser.getRole())) {
+                if (!allocation.getStaff().getId().equals(currentUser.getId())) {
+                    throw new BadRequestException("Bạn không có quyền xem lịch sử cấp phát này.");
+                }
+            }
+        }
 
         return mapToAllocationResponse(allocation);
     }
@@ -106,6 +152,21 @@ public class AllocationServiceImpl implements AllocationService{
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
+
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            if ("MANAGER".equalsIgnoreCase(currentUser.getRole())) {
+                if (staff.getDepartment() == null || 
+                        currentUser.getDepartment() == null || 
+                        !staff.getDepartment().getId().equals(currentUser.getDepartment().getId())) {
+                    throw new BadRequestException("Bạn không có quyền xem lịch sử cấp phát của nhân viên này.");
+                }
+            } else if ("USER".equalsIgnoreCase(currentUser.getRole())) {
+                if (!staffId.equals(currentUser.getId())) {
+                    throw new BadRequestException("Bạn không có quyền xem lịch sử cấp phát của nhân viên khác.");
+                }
+            }
+        }
 
         Page<Allocation> allocationPage = allocationRepository.findByStaffId(staffId, pageable);
 
@@ -124,7 +185,23 @@ public class AllocationServiceImpl implements AllocationService{
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Allocation> allocationPage = allocationRepository.findByAssetInstanceId(assetInstanceId, pageable);
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return Page.empty(pageable);
+        }
+
+        Page<Allocation> allocationPage;
+        if ("ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            allocationPage = allocationRepository.findByAssetInstanceId(assetInstanceId, pageable);
+        } else if ("MANAGER".equalsIgnoreCase(currentUser.getRole())) {
+            if (currentUser.getDepartment() == null) {
+                return Page.empty(pageable);
+            }
+            allocationPage = allocationRepository.findByAssetInstanceIdAndStaffDepartmentId(assetInstanceId, currentUser.getDepartment().getId(), pageable);
+        } else {
+            // USER (Staff) - Không được phép xem lịch sử bàn giao thiết bị
+            throw new BadRequestException("Bạn không có quyền xem lịch sử bàn giao của thiết bị này.");
+        }
 
         return allocationPage.map(this::mapToAllocationResponse);
     }
@@ -134,6 +211,39 @@ public class AllocationServiceImpl implements AllocationService{
 
         Allocation allocation = allocationRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy lịch sử"));
+
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            // Kiểm tra phân quyền cập nhật trạng thái
+            if ("APPROVED".equals(targetStatus) || "REJECTED".equals(targetStatus)) {
+                // Chỉ MANAGER và ADMIN mới được Duyệt / Từ chối
+                if (!"ADMIN".equalsIgnoreCase(currentUser.getRole()) && !"MANAGER".equalsIgnoreCase(currentUser.getRole())) {
+                    throw new BadRequestException("Bạn không có quyền Duyệt hoặc Từ chối yêu cầu cấp phát.");
+                }
+                // Nếu là MANAGER, nhân viên mượn phải thuộc cùng phòng ban
+                if ("MANAGER".equalsIgnoreCase(currentUser.getRole())) {
+                    if (allocation.getStaff().getDepartment() == null || 
+                            currentUser.getDepartment() == null || 
+                            !allocation.getStaff().getDepartment().getId().equals(currentUser.getDepartment().getId())) {
+                        throw new BadRequestException("Bạn không có quyền Duyệt hoặc Từ chối yêu cầu của nhân viên thuộc phòng ban khác.");
+                    }
+                }
+            } else if ("USING".equals(targetStatus) || "CANCELED".equals(targetStatus) || "RETURNED".equals(targetStatus)) {
+                // USER chỉ được tự Nhận / Trả / Hủy của chính mình
+                if ("USER".equalsIgnoreCase(currentUser.getRole())) {
+                    if (!allocation.getStaff().getId().equals(currentUser.getId())) {
+                        throw new BadRequestException("Bạn không thể thay đổi trạng thái yêu cầu của người khác.");
+                    }
+                } else if ("MANAGER".equalsIgnoreCase(currentUser.getRole())) {
+                    // MANAGER chỉ được thao tác cho nhân viên thuộc phòng của mình
+                    if (allocation.getStaff().getDepartment() == null || 
+                            currentUser.getDepartment() == null || 
+                            !allocation.getStaff().getDepartment().getId().equals(currentUser.getDepartment().getId())) {
+                        throw new BadRequestException("Bạn không có quyền thao tác trên yêu cầu của nhân viên thuộc phòng ban khác.");
+                    }
+                }
+            }
+        }
 
         String currentStatus = allocation.getStatus();
 
@@ -175,6 +285,7 @@ public class AllocationServiceImpl implements AllocationService{
 
         return mapToAllocationResponse(allocationRepository.save(allocation));
     }
+
 
     @Override
     public void deleteAllocation(Long id) {

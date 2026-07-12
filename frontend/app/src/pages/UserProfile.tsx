@@ -49,19 +49,11 @@ const UserProfile: React.FC = () => {
   const [updatingPassword, setUpdatingPassword] = useState(false);
 
   const fetchProfileData = async () => {
-    if (!user?.email) return;
+    if (!user?.id) return;
     setLoading(true);
     setError(null);
     try {
-      // 1. Get staff ID by email
-      const usersRes = await api.get('/api/v1/users?size=100');
-      const currentUser = usersRes.data?.content?.find((u: any) => u.email === user.email);
-      
-      if (!currentUser) {
-        throw new Error('Không tìm thấy thông tin tài khoản trên hệ thống.');
-      }
-      
-      const currentStaffId = currentUser.id;
+      const currentStaffId = user.id;
       setStaffId(currentStaffId);
 
       // 2. Fetch full profile details
@@ -81,7 +73,7 @@ const UserProfile: React.FC = () => {
 
   useEffect(() => {
     fetchProfileData();
-  }, [user?.email]);
+  }, [user?.id]);
 
   // Handle Edit Profile Submission
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -110,6 +102,7 @@ const UserProfile: React.FC = () => {
       // Sync auth context localstorage so avatar/name in header updates immediately
       const token = localStorage.getItem('token') || '';
       login(token, {
+        id: response.data.id,
         email: response.data.email,
         fullName: response.data.fullName,
         role: response.data.role
