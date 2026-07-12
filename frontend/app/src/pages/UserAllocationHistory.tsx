@@ -247,7 +247,7 @@ const UserAllocationHistory: React.FC = () => {
   return (
     <div className="admin-page-container">
       {/* Page Header */}
-      <div className="page-header" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="page-header">
         <div className="page-header-info">
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <History size={26} style={{ color: 'var(--primary-color)' }} />
@@ -259,7 +259,6 @@ const UserAllocationHistory: React.FC = () => {
           type="button" 
           className="btn-outline-sm" 
           onClick={handleRefresh}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <RefreshCw size={14} className={loading ? 'spin' : ''} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
           Làm mới
@@ -267,8 +266,8 @@ const UserAllocationHistory: React.FC = () => {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="filter-toolbar" style={{ backgroundColor: '#fff', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '24px' }}>
-        <div className="filter-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div className="filter-toolbar">
+        <div className="filter-group">
           <label style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-secondary)' }}>Trạng thái cấp phát:</label>
           <select 
             className="select-filter" 
@@ -277,7 +276,6 @@ const UserAllocationHistory: React.FC = () => {
               setStatusFilter(e.target.value);
               setPage(0);
             }}
-            style={{ minWidth: '180px', borderRadius: '50px', borderColor: 'var(--border-color)', backgroundColor: '#fff' }}
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="PENDING">Chờ phê duyệt</option>
@@ -446,8 +444,8 @@ const UserAllocationHistory: React.FC = () => {
 
       {/* Device Details Modal */}
       {isDetailOpen && createPortal(
-        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000, padding: '16px' }} onClick={() => setIsDetailOpen(false)}>
-          <div className="modal-card" style={{ maxWidth: '800px', width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', border: '1px solid var(--border-color)', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={() => setIsDetailOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <HardDrive size={20} style={{ color: 'var(--primary-color)' }} />
@@ -457,7 +455,6 @@ const UserAllocationHistory: React.FC = () => {
                 type="button" 
                 className="btn-outline-sm" 
                 onClick={() => setIsDetailOpen(false)}
-                style={{ padding: '6px 16px', borderRadius: '50px', cursor: 'pointer' }}
               >
                 Đóng
               </button>
@@ -474,7 +471,7 @@ const UserAllocationHistory: React.FC = () => {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: '20px' }}>
                   
                   {/* General Specifications */}
                   <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '16px' }}>

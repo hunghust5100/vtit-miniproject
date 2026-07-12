@@ -27,7 +27,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   return createPortal(
     <div 
       className="modal-overlay" 
-      style={{ alignItems: 'center', display: 'flex', zIndex: 9999 }}
+      style={{ display: 'flex', zIndex: 9999 }}
       onClick={onCancel}
     >
       <div 

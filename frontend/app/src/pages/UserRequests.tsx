@@ -145,7 +145,7 @@ const UserRequests: React.FC = () => {
   return (
     <div className="admin-page-container">
       {/* Page Header */}
-      <div className="page-header" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="page-header">
         <div className="page-header-info">
           <h1 className="page-title">Yêu cầu Cấp phát Thiết bị</h1>
           <p className="page-subtitle">Chọn dòng thiết bị hoặc quét mã thiết bị thực tế để đăng ký cấp phát phục vụ công việc.</p>
@@ -154,7 +154,6 @@ const UserRequests: React.FC = () => {
           type="button" 
           className="btn-outline-sm" 
           onClick={() => navigate('/user/history')}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px' }}
         >
           <History size={14} />
           Xem lịch sử cấp phát
@@ -169,7 +168,7 @@ const UserRequests: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', alignItems: 'start' }}>
         {/* Sub-grid for main sections */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '24px' }} className="user-requests-layout">
+        <div className="user-requests-layout">
           
           {/* Left Column: Asset Model Catalog */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -201,7 +200,7 @@ const UserRequests: React.FC = () => {
                 Không tìm thấy dòng thiết bị nào phù hợp với tìm kiếm.
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: '16px' }}>
                 {filteredModels.map((model) => (
                   <div 
                     key={model.id} 

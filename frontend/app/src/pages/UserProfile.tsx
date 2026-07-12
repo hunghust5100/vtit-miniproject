@@ -192,7 +192,7 @@ const UserProfile: React.FC = () => {
       )}
 
       {/* Forms Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }} className="animate-fade-in">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: '24px' }} className="animate-fade-in">
         
         {/* Edit Profile Form */}
         <div className="dashboard-content-section" style={{ height: 'fit-content' }}>

@@ -2,7 +2,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 1000;
+  z-index: 9999;
   font-family: inherit;
 }
 
@@ -300,7 +300,20 @@
   color: #64748b;
 }
 
+@media (max-width: 768px) {
+  .chatbot-window {
+    width: calc(100vw - 32px);
+    right: 0;
+    bottom: 72px;
+  }
+}
+
 @media (max-width: 480px) {
+  .chatbot-widget-container {
+    bottom: 16px;
+    right: 16px;
+  }
+  
   .chatbot-window {
     position: fixed;
     bottom: 0;
@@ -308,8 +321,12 @@
     width: 100vw;
     height: 100vh;
     border-radius: 0;
+    z-index: 10000;
   }
+  
   .chatbot-bubble-btn {
-    display: none;
+    width: 48px;
+    height: 48px;
   }
 }
+

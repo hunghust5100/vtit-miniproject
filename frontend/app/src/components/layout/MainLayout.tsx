@@ -14,9 +14,10 @@ import {
   ClipboardList,
   User,
   History,
-  Warehouse
+  Warehouse,
+  Bot
 } from 'lucide-react';
-import viettelLogo from '../../assets/logo-viettel.png';
+import viettelLogo from '../../assets/viettel_logo.png';
 import './MainLayout.css';
 import ChatbotWidget from '../chatbot/ChatbotWidget';
 
@@ -57,6 +58,14 @@ const MainLayout: React.FC = () => {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleOpenAI = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('open-chatbot'));
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false); // Close sidebar on mobile
+    }
   };
 
   // Get initial letters for avatar
@@ -106,6 +115,7 @@ const MainLayout: React.FC = () => {
       );
     }
     
+    items.push({ path: '#ai-assistant', label: 'Trợ lý AI', icon: <Bot size={20} /> });
     items.push({ path: '/profile', label: 'Thông tin cá nhân', icon: <User size={20} /> });
     
     return items;
@@ -174,6 +184,22 @@ const MainLayout: React.FC = () => {
                 ? location.pathname === item.path
                 : location.pathname.startsWith(item.path);
 
+              if (item.path.startsWith('#')) {
+                return (
+                  <li key={item.path}>
+                    <a 
+                      href={item.path}
+                      onClick={handleOpenAI}
+                      className="menu-link"
+                      data-tooltip={item.label}
+                    >
+                      <span className="menu-icon">{item.icon}</span>
+                      <span className="menu-text">{item.label}</span>
+                    </a>
+                  </li>
+                );
+              }
+
               return (
                 <li key={item.path}>
                   <Link 
@@ -205,8 +231,8 @@ const MainLayout: React.FC = () => {
         </div>
       </div>
       
-      {/* AI Chatbot Widget (Admin Only) */}
-      {role === 'ADMIN' && <ChatbotWidget />}
+      {/* AI Chatbot Widget (All Logged-in Users) */}
+      {user && <ChatbotWidget />}
     </div>
   );
 };
