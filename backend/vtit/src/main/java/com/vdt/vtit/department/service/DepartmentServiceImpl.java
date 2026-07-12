@@ -192,6 +192,15 @@ public class DepartmentServiceImpl implements DepartmentService{
     }
 
     private DepartmentResponse mapToDepartmentResponse(Department department) {
+        String headManagerName = "-";
+        if (department.getHeadManagerId() != null) {
+            try {
+                headManagerName = userService.getUserById(department.getHeadManagerId()).getFullName();
+            } catch (Exception e) {
+                headManagerName = "Không tìm thấy quản lý";
+            }
+        }
+
         return DepartmentResponse.builder()
                 .id(department.getId())
                 .name(department.getName())
@@ -199,7 +208,7 @@ public class DepartmentServiceImpl implements DepartmentService{
                 .location(department.getLocation())
                 .category(department.getCategory())
                 .headManagerId(department.getHeadManagerId())
-                .headManagerName(userService.getUserById(department.getHeadManagerId()).getFullName())
+                .headManagerName(headManagerName)
                 .staffAmount(department.getStaffs() == null ? 0 : department.getStaffs().size())
                 .build();
     }
